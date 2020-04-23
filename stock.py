@@ -140,7 +140,7 @@ reg.fit(X, Y)
 vol = 28400448
 cr = 0.25
 div = 0.08
-ir = 1.43
+ir = 2.5
 
 x = [vol, cr, div, ir]
 y = reg.predict([x])
