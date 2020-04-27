@@ -13,21 +13,21 @@
 import pandas as pd
 from sklearn import linear_model
 
-imf_filenames = {
+imf_qis_filenames = {
     'cpi': "data/imf/imf-inflation-20200422.csv",
     'gdp': "data/imf/imf-gdp-20200422.csv",
-    'unemployment': "data/imf/imf-people-20200422.csv",
-    'current': "data/imf/imf-current account-20200422.csv",
-    'government': "data/imf/imf-government finance-20200422.csv",
+    'ppl': "data/imf/imf-people-20200422.csv",
+    'acc': "data/imf/imf-current account-20200422.csv",
+    'fin': "data/imf/imf-government finance-20200422.csv",
 }
 
-imf_ingest_params = {
+imf_qis_ingest_params = {
     'header': 0,
     'index_col': 0,
     'encoding': 'ISO-8859-1',
 }
 
-cash_ingest_params = {
+cash_rate_ingest_params = {
     'filepath_or_buffer': "data/cash_rate.csv",
     'header': 0,
     'index_col': 'effective_date',
@@ -39,7 +39,7 @@ cash_ingest_params = {
     'parse_dates': ['effective_date'],
 }
 
-div_ingest_params = {
+dividend_ingest_params = {
     'header': 0,
     'index_col': 'ex_dividend_date',
     'dtype': {'sector': str,
@@ -63,67 +63,77 @@ share_ingest_params = {
               'high': float,
               'low': float,
               'close': float,
-              'volume': int,
+              'volume': float,
               },
     'parse_dates': ['date'],
 }
 
 
-def imf_ingest(filenames, ingest_params):
-    imfs = dict()
+def imf_qis_ingest(filenames, ingest_params):
+    """
+        Ingest IMF QIs.
+    """
+    imf_qis = dict()
     for qi_name, filename in filenames.items():
         df = pd.read_csv(filepath_or_buffer=filename, **ingest_params)
         qi = df.loc["Australia"]
         qi.index = pd.to_datetime(qi.index)
-        imfs[qi_name] = qi
+        qi = pd.to_numeric(qi, errors='coerce', downcast='float').dropna()
+        imf_qis[qi_name] = qi
 
-    return imfs
+    return imf_qis
 
 
-def cash_ingest(ingest_params):
+def cash_rate_ingest(ingest_params):
+    """
+        Ingest cash rate.
+    """
     df = pd.read_csv(**ingest_params)
     cash = df["cash_rate_target"]
 
     return cash
 
 
-def div_ingest(asx_code, ingest_params):
+def dividend_ingest(asx_code, ingest_params):
+    """
+        Ingest dividend.
+    """
     filename = "data/{asx_code}_dividend.csv".format(asx_code=asx_code)
     df = pd.read_csv(filepath_or_buffer=filename, **ingest_params)
     div = df["dividend"]
+    # Deal with duplicated dates.
+    div = div.groupby(div.index).agg(sum)
 
     return div
 
 
 def share_ingest(asx_code, ingest_params):
+    """
+        Ingest share.
+    """
     filename = "data/{asx_code}.csv".format(asx_code=asx_code)
     df = pd.read_csv(filepath_or_buffer=filename, **ingest_params)
+    share = df[["date", "close", "volume"]]
 
-    return df
+    return share
 
 
-def get_rate(date, qi):
+def extract_qi(date, qi):
     """
-        Get
-        If date appears exactly in ref, it returns the rate that corresponds to the date; otherwise, it returns
-        the rate that corresponds to the closet date (later) appeared in ref.
+        If date appears exactly in QI, it returns the rate that corresponds to the date; otherwise, it returns
+        the rate that corresponds to the closet date (later) appeared in QI.
     """
     if date in qi:
         rate = qi[date]
     else:
         closet_date = None
-        for idx in qi.index:
+        for index_date in qi.index:
             if not closet_date:
-                if (date - idx).days >= 0:
-                    closet_date = idx
-            elif (date - idx).days >= 0 and idx > closet_date:
-                closet_date = idx
+                if (date - index_date).days >= 0:
+                    closet_date = index_date
+            elif (date - index_date).days >= 0 and index_date > closet_date:
+                closet_date = index_date
         rate = qi[closet_date]
-
-    try:
-        rate = float(rate)
-    except TypeError:
-        rate = 0
 
     return rate
 
@@ -131,20 +141,22 @@ def get_rate(date, qi):
 def collate_qis(row, qis):
     date = row.date
     for qi_name, qi in qis.items():
-        row[qi_name] = get_rate(date, qi)
+        row[qi_name] = extract_qi(date, qi)
 
     return row
 
 
 def collate(asx_code):
-    imfs = imf_ingest(imf_filenames, imf_ingest_params)
-    cash = cash_ingest(cash_ingest_params)
-    div = div_ingest(asx_code, div_ingest_params)
+    # Ingest QIs.
+    imf_qis = imf_qis_ingest(imf_qis_filenames, imf_qis_ingest_params)
+    cash_rate = cash_rate_ingest(cash_rate_ingest_params)
+    dividend = dividend_ingest(asx_code, dividend_ingest_params)
 
-    qis = imfs
-    qis['cash'] = cash
-    qis['div'] = div
+    qis = imf_qis
+    qis['cash'] = cash_rate
+    qis['div'] = dividend
 
+    # Ingest share.
     share = share_ingest(asx_code, share_ingest_params)
 
     collated_share = share.apply(lambda row: collate_qis(row, qis), axis=1)
@@ -155,7 +167,7 @@ def collate(asx_code):
 def main():
     collated_share = collate('tls')
     # collated_share.to_csv("data/{asx_code}_collated.csv".format(asx_code="tls"))
-    X = collated_share[['volume', 'cpi', 'gdp', 'unemployment', 'current', 'government', 'cash', 'div']]
+    X = collated_share[['volume', 'cpi', 'gdp', 'ppl', 'acc', 'fin', 'cash', 'div']]
     Y = collated_share['close'].values
 
     reg = linear_model.BayesianRidge()
@@ -165,13 +177,13 @@ def main():
     vol = 28400448
     cpi = 1.5
     gdp = 1.2
-    unemployment = 8.5
-    current = -3
-    government = -2.5
+    people = 8.5
+    account = -3
+    finance = -2.5
     cash = 0.25
     div = 8
 
-    x = [vol, cpi, gdp, unemployment, current, government, cash, div]
+    x = [vol, cpi, gdp, people, account, finance, cash, div]
     y = reg.predict([x])
     print(y)
 
