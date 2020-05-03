@@ -166,6 +166,12 @@ def collate(asx_code):
     return collated_share
 
 
+def feature_extraction(asx_code):
+    df = collate(asx_code)
+    df.to_csv("data/{asx_code}_collated.csv".format(asx_code="tls"), index=False)
+    return df
+
+
 def feature_selection(asx_code, qi_names, y_col_name='close'):
     """
         Select QIs (features) that influence the share's price most significantly.
@@ -188,8 +194,7 @@ def main():
     # 1 feature engineering
     # --------------------------------------------------------------------------------------------------
     # 1.1 feature extraction
-    # collated_share = collate('tls')
-    # collated_share.to_csv("data/{asx_code}_collated.csv".format(asx_code="tls"), index=False)
+    feature_selection('tls')
 
     # 1.2 feature selection
     qi_names = ['volume', 'cpi', 'gdp', 'ppl', 'acc', 'fin', 'cash', 'div']
@@ -199,7 +204,6 @@ def main():
     # 2 fit
     # --------------------------------------------------------------------------------------------------
     # 2.1 parameter selection
-
 
     # apply
 
