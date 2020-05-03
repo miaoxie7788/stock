@@ -10,8 +10,10 @@
         - share (ASX)       https://www.marketindex.com.au/
 """
 
+import numpy as np
 import pandas as pd
-from sklearn import linear_model
+from sklearn.feature_selection import RFECV
+from sklearn.svm import LinearSVR
 
 imf_qis_filenames = {
     'cpi': "data/imf/imf-inflation-20200422.csv",
@@ -164,28 +166,59 @@ def collate(asx_code):
     return collated_share
 
 
+def feature_selection(asx_code, qi_names, y_col_name='close'):
+    """
+        Select QIs (features) that influence the share's price most significantly.
+    """
+    df = pd.read_csv("data/{asx_code}_collated.csv".format(asx_code=asx_code))
+
+    X = df[qi_names]
+    y = df[y_col_name]
+
+    svr = LinearSVR(max_iter=10000)
+    selector = RFECV(estimator=svr, cv=5)
+    selector.fit(X, y)
+
+    selected_qi_names = np.array(qi_names)[selector.support_]
+    print("The most significant QIs are:", list(selected_qi_names))
+    return selected_qi_names
+
+
 def main():
-    collated_share = collate('tls')
-    # collated_share.to_csv("data/{asx_code}_collated.csv".format(asx_code="tls"))
-    X = collated_share[['volume', 'cpi', 'gdp', 'ppl', 'acc', 'fin', 'cash', 'div']]
-    Y = collated_share['close'].values
+    # 1 feature engineering
+    # --------------------------------------------------------------------------------------------------
+    # 1.1 feature extraction
+    # collated_share = collate('tls')
+    # collated_share.to_csv("data/{asx_code}_collated.csv".format(asx_code="tls"), index=False)
 
-    reg = linear_model.BayesianRidge()
-    reg.fit(X, Y)
+    # 1.2 feature selection
+    qi_names = ['volume', 'cpi', 'gdp', 'ppl', 'acc', 'fin', 'cash', 'div']
+    selected_qi_names = feature_selection('tls', qi_names)
+    #  selected_qi_names = ['volume', 'gdp', 'ppl', 'cash', 'div']
 
-    # predict the share price by giving the other factors.
-    vol = 28400448
-    cpi = 1.5
-    gdp = 1.2
-    people = 8.5
-    account = -3
-    finance = -2.5
-    cash = 0.25
-    div = 8
+    # 2 fit
+    # --------------------------------------------------------------------------------------------------
+    # 2.1 parameter selection
 
-    x = [vol, cpi, gdp, people, account, finance, cash, div]
-    y = reg.predict([x])
-    print(y)
+
+    # apply
+
+    # reg = linear_model.BayesianRidge()
+    # reg.fit(X, Y)
+    #
+    # # predict the share price by giving the other factors.
+    # vol = 28400448
+    # cpi = 1.5
+    # gdp = 1.2
+    # people = 8.5
+    # account = -3
+    # finance = -2.5
+    # cash = 0.25
+    # div = 8
+    #
+    # x = [vol, cpi, gdp, people, account, finance, cash, div]
+    # y = reg.predict([x])
+    # print(y)
 
 
 if __name__ == "__main__":
