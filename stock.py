@@ -12,8 +12,11 @@
 
 import numpy as np
 import pandas as pd
+from joblib import dump, load
 from sklearn.feature_selection import RFECV
+from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVR
+from sklearn.svm import SVR
 
 imf_qis_filenames = {
     'cpi': "data/imf/imf-inflation-20200422.csv",
@@ -172,18 +175,18 @@ def feature_extraction(asx_code):
     return df
 
 
-def feature_selection(asx_code, y_col_name='close'):
+def feature_selection(asx_code, target_col='close'):
     """
         Select QIs (features) that influence the share's price most significantly.
     """
     df = pd.read_csv("data/{asx_code}_collated.csv".format(asx_code=asx_code))
-    qi_names = list(set(df.columns) - {'date', y_col_name})
+    qi_names = list(set(df.columns) - {'date', target_col})
 
     X = df[qi_names]
-    y = df[y_col_name]
+    y = df[target_col]
 
-    svr = LinearSVR(max_iter=10000)
-    selector = RFECV(estimator=svr, cv=5)
+    svr = LinearSVR(max_iter=5000)
+    selector = RFECV(estimator=svr, cv=3)
     selector.fit(X, y)
 
     selected_qi_names = np.array(qi_names)[selector.support_]
@@ -191,38 +194,79 @@ def feature_selection(asx_code, y_col_name='close'):
     return selected_qi_names
 
 
+def parameter_selection(asx_code, feature_cols, target_col='close'):
+    df = pd.read_csv("data/{asx_code}_collated.csv".format(asx_code=asx_code))
+
+    X = df[feature_cols]
+    y = df[target_col]
+
+    param_grid = {
+        'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+        'degree': [3],
+        'C': [0.1, 1, 2],
+        'epsilon': [0.1, 0.2, 0.5],
+        'max_iter': [10000],
+    }
+
+    svr = SVR()
+    grid_search_cv = GridSearchCV(svr, param_grid=param_grid, n_jobs=-1, cv=5)
+    grid_search_cv.fit(X, y)
+    return grid_search_cv.best_estimator_
+
+
+def fit(asx_code, estimator, feature_cols, target_col='close'):
+    df = pd.read_csv("data/{asx_code}_collated.csv".format(asx_code=asx_code))
+
+    X = df[feature_cols]
+    y = df[target_col]
+
+    estimator.set_params(max_iter=-1)
+    fitted_svr = estimator.fit(X, y)
+    dump(fitted_svr, 'data/fitted.{asx_code}'.format(asx_code=asx_code))
+    return fitted_svr
+
+
+def predict(asx_code):
+    fitted_svr = load('data/fitted.{asx_code}'.format(asx_code=asx_code))
+
+    vol = 32929415
+    cpi = 2.2
+    gdp = 1.2
+    ppl = 8.5
+    acc = -3
+    fin = -2.5
+    cash = 0.25
+    div = 8
+
+    x = [vol, gdp, ppl, cash, div]
+    y = fitted_svr.predict([[22222222, 0.2, 12, 0.25, 8]])
+    print(y)
+
+
 def main():
+    # --------------------------------------------------------------------------------------------------
     # 1 feature engineering
     # --------------------------------------------------------------------------------------------------
     # 1.1 feature extraction
     # feature_extraction('tls')
 
     # 1.2 feature selection
-    selected_qi_names = feature_selection('tls')
-    #  selected_qi_names = ['volume', 'gdp', 'ppl', 'cash', 'div']
+    # feature_selection('tls')
+    selected_qi_names = ['volume', 'gdp', 'ppl', 'cash', 'div']
 
+    # --------------------------------------------------------------------------------------------------
     # 2 fit
     # --------------------------------------------------------------------------------------------------
     # 2.1 parameter selection
+    # svr = parameter_selection('tls', selected_qi_names)
 
-    # apply
+    # 2.2 fit with best estimator
+    # fitted_svr = fit('tls', svr, selected_qi_names)
 
-    # reg = linear_model.BayesianRidge()
-    # reg.fit(X, Y)
-    #
-    # # predict the share price by giving the other factors.
-    # vol = 28400448
-    # cpi = 1.5
-    # gdp = 1.2
-    # people = 8.5
-    # account = -3
-    # finance = -2.5
-    # cash = 0.25
-    # div = 8
-    #
-    # x = [vol, cpi, gdp, people, account, finance, cash, div]
-    # y = reg.predict([x])
-    # print(y)
+    # --------------------------------------------------------------------------------------------------
+    # 3 apply / predict
+    # --------------------------------------------------------------------------------------------------
+    predict('tls')
 
 
 if __name__ == "__main__":
