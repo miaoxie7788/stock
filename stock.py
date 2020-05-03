@@ -172,11 +172,12 @@ def feature_extraction(asx_code):
     return df
 
 
-def feature_selection(asx_code, qi_names, y_col_name='close'):
+def feature_selection(asx_code, y_col_name='close'):
     """
         Select QIs (features) that influence the share's price most significantly.
     """
     df = pd.read_csv("data/{asx_code}_collated.csv".format(asx_code=asx_code))
+    qi_names = list(set(df.columns) - {'date', y_col_name})
 
     X = df[qi_names]
     y = df[y_col_name]
@@ -194,11 +195,10 @@ def main():
     # 1 feature engineering
     # --------------------------------------------------------------------------------------------------
     # 1.1 feature extraction
-    feature_selection('tls')
+    # feature_extraction('tls')
 
     # 1.2 feature selection
-    qi_names = ['volume', 'cpi', 'gdp', 'ppl', 'acc', 'fin', 'cash', 'div']
-    selected_qi_names = feature_selection('tls', qi_names)
+    selected_qi_names = feature_selection('tls')
     #  selected_qi_names = ['volume', 'gdp', 'ppl', 'cash', 'div']
 
     # 2 fit
