@@ -16,7 +16,6 @@ from joblib import dump, load
 from sklearn.feature_selection import RFECV
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVR
-from sklearn.svm import SVR
 
 imf_qis_filenames = {
     'cpi': "data/imf/imf-inflation-20200422.csv",
@@ -74,6 +73,26 @@ share_ingest_params = {
 }
 
 
+def make_div_filename(asx_code):
+    filename = "data/{asx_code}_dividend.csv".format(asx_code=asx_code)
+    return filename
+
+
+def make_share_filename(asx_code):
+    filename = "data/{asx_code}.csv".format(asx_code=asx_code)
+    return filename
+
+
+def make_extracted_filename(asx_code):
+    filename = "data/{asx_code}_extracted.csv".format(asx_code=asx_code)
+    return filename
+
+
+def make_fitted_filename(asx_code):
+    filename = 'data/fitted.{asx_code}'.format(asx_code=asx_code)
+    return filename
+
+
 def imf_qis_ingest(filenames, ingest_params):
     """
         Ingest IMF QIs.
@@ -103,7 +122,7 @@ def dividend_ingest(asx_code, ingest_params):
     """
         Ingest dividend.
     """
-    filename = "data/{asx_code}_dividend.csv".format(asx_code=asx_code)
+    filename = make_div_filename(asx_code=asx_code)
     df = pd.read_csv(filepath_or_buffer=filename, **ingest_params)
     div = df["dividend"]
     # Deal with duplicated dates.
@@ -116,7 +135,7 @@ def share_ingest(asx_code, ingest_params):
     """
         Ingest share.
     """
-    filename = "data/{asx_code}.csv".format(asx_code=asx_code)
+    filename = make_share_filename(asx_code=asx_code)
     df = pd.read_csv(filepath_or_buffer=filename, **ingest_params)
     share = df[["date", "close", "volume"]]
 
@@ -171,7 +190,8 @@ def collate(asx_code):
 
 def feature_extraction(asx_code):
     df = collate(asx_code)
-    df.to_csv("data/{asx_code}_collated.csv".format(asx_code="tls"), index=False)
+    filename = make_extracted_filename(asx_code=asx_code)
+    df.to_csv(filename, index=False)
     return df
 
 
@@ -179,14 +199,15 @@ def feature_selection(asx_code, target_col='close'):
     """
         Select QIs (features) that influence the share's price most significantly.
     """
-    df = pd.read_csv("data/{asx_code}_collated.csv".format(asx_code=asx_code))
+    filename = make_extracted_filename(asx_code=asx_code)
+    df = pd.read_csv(filename)
     qi_names = list(set(df.columns) - {'date', target_col})
 
     X = df[qi_names]
     y = df[target_col]
 
-    svr = LinearSVR(max_iter=5000)
-    selector = RFECV(estimator=svr, cv=3)
+    svr = LinearSVR(max_iter=1000)
+    selector = RFECV(estimator=svr, cv=5)
     selector.fit(X, y)
 
     selected_qi_names = np.array(qi_names)[selector.support_]
@@ -195,40 +216,43 @@ def feature_selection(asx_code, target_col='close'):
 
 
 def parameter_selection(asx_code, feature_cols, target_col='close'):
-    df = pd.read_csv("data/{asx_code}_collated.csv".format(asx_code=asx_code))
+    filename = make_extracted_filename(asx_code=asx_code)
+    df = pd.read_csv(filename)
 
     X = df[feature_cols]
     y = df[target_col]
 
     param_grid = {
-        'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
-        'degree': [3],
+        'epsilon': [0.0, 0.1, 0.2],
         'C': [0.1, 1, 2],
-        'epsilon': [0.1, 0.2, 0.5],
         'max_iter': [10000],
     }
 
-    svr = SVR()
+    svr = LinearSVR()
     grid_search_cv = GridSearchCV(svr, param_grid=param_grid, n_jobs=-1, cv=5)
     grid_search_cv.fit(X, y)
     return grid_search_cv.best_estimator_
 
 
 def fit(asx_code, estimator, feature_cols, target_col='close'):
-    df = pd.read_csv("data/{asx_code}_collated.csv".format(asx_code=asx_code))
+    input_filename = make_extracted_filename(asx_code=asx_code)
+    df = pd.read_csv(input_filename)
 
     X = df[feature_cols]
     y = df[target_col]
 
     estimator.set_params(max_iter=-1)
     fitted_svr = estimator.fit(X, y)
-    dump(fitted_svr, 'data/fitted.{asx_code}'.format(asx_code=asx_code))
+
+    output_filename = make_fitted_filename(asx_code=asx_code)
+    dump(fitted_svr, output_filename)
     return fitted_svr
 
 
 def predict(asx_code):
-    fitted_svr = load('data/fitted.{asx_code}'.format(asx_code=asx_code))
-
+    filename = make_fitted_filename(asx_code=asx_code)
+    fitted_svr = load(filename)
+    print(fitted_svr)
     vol = 32929415
     cpi = 2.2
     gdp = 1.2
@@ -239,36 +263,41 @@ def predict(asx_code):
     div = 8
 
     x = [vol, gdp, ppl, cash, div]
-    y = fitted_svr.predict([[22222222, 0.2, 12, 0.25, 8]])
+    input_filename = make_extracted_filename(asx_code=asx_code)
+    df = pd.read_csv(input_filename)
+
+    X = df[['volume', 'gdp', 'ppl', 'cash', 'div']]
+    y = fitted_svr.predict(X)
     print(y)
 
 
-def main():
+def main(asx_code):
     # --------------------------------------------------------------------------------------------------
     # 1 feature engineering
     # --------------------------------------------------------------------------------------------------
     # 1.1 feature extraction
-    # feature_extraction('tls')
+    # feature_extraction(asx_code=asx_code)
 
     # 1.2 feature selection
-    # feature_selection('tls')
+    # feature_selection(asx_code=asx_code)
     selected_qi_names = ['volume', 'gdp', 'ppl', 'cash', 'div']
 
     # --------------------------------------------------------------------------------------------------
     # 2 fit
     # --------------------------------------------------------------------------------------------------
     # 2.1 parameter selection
-    # svr = parameter_selection('tls', selected_qi_names)
+    # svr = parameter_selection(asx_code=asx_code, feature_cols=selected_qi_names)
+    # print(svr)
 
     # 2.2 fit with best estimator
-    # fitted_svr = fit('tls', svr, selected_qi_names)
+    # fitted_svr = fit(asx_code=asx_code, estimator=svr, feature_cols=selected_qi_names)
 
     # --------------------------------------------------------------------------------------------------
     # 3 apply / predict
     # --------------------------------------------------------------------------------------------------
-    predict('tls')
+    predict(asx_code=asx_code)
 
 
 if __name__ == "__main__":
     # execute only if run as a script
-    main()
+    main('tls')
