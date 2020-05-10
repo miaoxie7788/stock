@@ -134,7 +134,7 @@ def extract_qi(date, qi):
     return rate
 
 
-def collate_qis(row, qis):
+def extract_qis(row, qis):
     date = row.date
     for qi_name, qi in qis.items():
         row[qi_name] = extract_qi(date, qi)
@@ -153,7 +153,7 @@ def feature_extraction(asx_code):
     share_path = "data/{asx_code}".format(asx_code=asx_code)
     share = ingest_share(asx_code, share_path)
 
-    collated_share = share.apply(lambda row: collate_qis(row, qis), axis=1)
+    collated_share = share.apply(lambda row: extract_qis(row, qis), axis=1)
     filename = "{path}/{name}.csv".format(path=share_path, name='features')
     collated_share.to_csv(filename, index=False)
 
