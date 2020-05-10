@@ -17,126 +17,98 @@ from sklearn.feature_selection import RFECV
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVR
 
-imf_qis_filenames = {
-    'cpi': "data/imf/imf-inflation-20200422.csv",
-    'gdp': "data/imf/imf-gdp-20200422.csv",
-    'ppl': "data/imf/imf-people-20200422.csv",
-    'acc': "data/imf/imf-current account-20200422.csv",
-    'fin': "data/imf/imf-government finance-20200422.csv",
-}
 
-imf_qis_ingest_params = {
-    'header': 0,
-    'index_col': 0,
-    'encoding': 'ISO-8859-1',
-}
+def ingest_imf_qi(df):
+    qi = df.loc["Australia"]
+    qi.index = pd.to_datetime(qi.index)
+    qi = pd.to_numeric(qi, errors='coerce', downcast='float').dropna()
 
-cash_rate_ingest_params = {
-    'filepath_or_buffer': "data/cash_rate.csv",
-    'header': 0,
-    'index_col': 'effective_date',
-    'dtype': {'effective_date': str,
-              'change_points': float,
-              'cash_rate_target': float,
-              'related_documents': str,
-              },
-    'parse_dates': ['effective_date'],
-}
-
-dividend_ingest_params = {
-    'header': 0,
-    'index_col': 'ex_dividend_date',
-    'dtype': {'sector': str,
-              'market_cap': str,
-              'distribution_type': str,
-              'dividend': float,
-              'franking': str,
-              'ex_dividend_date': str,
-              'payment_date': str,
-              'current_price': str,
-              'price_7d_avg': str,
-              'dividend_yield': str,
-              },
-    'parse_dates': ['ex_dividend_date', 'payment_date'],
-}
-
-share_ingest_params = {
-    'header': 0,
-    'dtype': {'date': str,
-              'open': float,
-              'high': float,
-              'low': float,
-              'close': float,
-              'volume': float,
-              },
-    'parse_dates': ['date'],
-}
+    return qi
 
 
-def make_div_filename(asx_code):
-    filename = "data/{asx_code}_dividend.csv".format(asx_code=asx_code)
-    return filename
+def ingest_cash_rate(df):
+    qi = df["cash_rate_target"]
+
+    return qi
 
 
-def make_share_filename(asx_code):
-    filename = "data/{asx_code}.csv".format(asx_code=asx_code)
-    return filename
-
-
-def make_extracted_filename(asx_code):
-    filename = "data/{asx_code}_extracted.csv".format(asx_code=asx_code)
-    return filename
-
-
-def make_fitted_filename(asx_code):
-    filename = 'data/fitted.{asx_code}'.format(asx_code=asx_code)
-    return filename
-
-
-def imf_qis_ingest(filenames, ingest_params):
-    """
-        Ingest IMF QIs.
-    """
-    imf_qis = dict()
-    for qi_name, filename in filenames.items():
-        df = pd.read_csv(filepath_or_buffer=filename, **ingest_params)
-        qi = df.loc["Australia"]
-        qi.index = pd.to_datetime(qi.index)
-        qi = pd.to_numeric(qi, errors='coerce', downcast='float').dropna()
-        imf_qis[qi_name] = qi
-
-    return imf_qis
-
-
-def cash_rate_ingest(ingest_params):
-    """
-        Ingest cash rate.
-    """
-    df = pd.read_csv(**ingest_params)
-    cash = df["cash_rate_target"]
-
-    return cash
-
-
-def dividend_ingest(asx_code, ingest_params):
-    """
-        Ingest dividend.
-    """
-    filename = make_div_filename(asx_code=asx_code)
-    df = pd.read_csv(filepath_or_buffer=filename, **ingest_params)
-    div = df["dividend"]
+def ingest_div(df):
+    qi = df["dividend"]
     # Deal with duplicated dates.
-    div = div.groupby(div.index).agg(sum)
+    qi = qi.groupby(qi.index).agg(sum)
 
-    return div
+    return qi
 
 
-def share_ingest(asx_code, ingest_params):
-    """
-        Ingest share.
-    """
-    filename = make_share_filename(asx_code=asx_code)
-    df = pd.read_csv(filepath_or_buffer=filename, **ingest_params)
+def construct_qis_ingest_dict(asx_code):
+    constant_qi_path = "data/constant"
+    variable_qi_path = "data/{asx_code}".format(asx_code=asx_code)
+
+    # constant qi: imf qis (acc, cpi, fin, gdp, ppl), cash rate
+    imf_qi_ingest_params = {
+        'header': 0,
+        'index_col': 0,
+        'encoding': 'ISO-8859-1',
+    }
+
+    cash_rate_ingest_params = {
+        'header': 0,
+        'index_col': 'effective_date',
+        'parse_dates': ['effective_date'],
+    }
+
+    # variable qi: div
+    div_ingest_params = {
+        'header': 0,
+        'index_col': 'ex_dividend_date',
+        'parse_dates': ['ex_dividend_date', 'payment_date'],
+    }
+
+    imf_qi_names = ['acc', 'cpi', 'fin', 'gdp', 'ppl']
+
+    qis_ingest_dict = dict()
+    for qi_name in imf_qi_names:
+        qis_ingest_dict[qi_name] = {
+            'filename': "{path}/{name}.csv".format(path=constant_qi_path, name=qi_name),
+            'ingest_params': imf_qi_ingest_params,
+            'ingest_func': ingest_imf_qi,
+        }
+
+    qi_name = 'cash_rate'
+    qis_ingest_dict[qi_name] = {
+        'filename': "{path}/{name}.csv".format(path=constant_qi_path, name=qi_name),
+        'ingest_params': cash_rate_ingest_params,
+        'ingest_func': ingest_cash_rate,
+    }
+
+    qi_name = 'div'
+    qis_ingest_dict[qi_name] = {
+        'filename': "{path}/{name}.csv".format(path=variable_qi_path, name=qi_name),
+        'ingest_params': div_ingest_params,
+        'ingest_func': ingest_div,
+    }
+
+    return qis_ingest_dict
+
+
+def ingest_qis(qis_ingest_dict):
+    qis_dict = dict()
+    for key, val in qis_ingest_dict.items():
+        df = pd.read_csv(filepath_or_buffer=val['filename'], **val['ingest_params'])
+        qi = val['ingest_func'](df)
+        qis_dict[key] = qi
+
+    return qis_dict
+
+
+def ingest_share(asx_code, share_path):
+    share_ingest_params = {
+        'header': 0,
+        'parse_dates': ['date'],
+    }
+
+    filename = "{path}/{name}.csv".format(path=share_path, name=asx_code)
+    df = pd.read_csv(filepath_or_buffer=filename, **share_ingest_params)
     share = df[["date", "close", "volume"]]
 
     return share
@@ -170,32 +142,25 @@ def collate_qis(row, qis):
     return row
 
 
-def collate(asx_code):
-    # Ingest QIs.
-    imf_qis = imf_qis_ingest(imf_qis_filenames, imf_qis_ingest_params)
-    cash_rate = cash_rate_ingest(cash_rate_ingest_params)
-    dividend = dividend_ingest(asx_code, dividend_ingest_params)
+def feature_extraction(asx_code):
+    # Construct QIs.
+    qis_ingest_dict = construct_qis_ingest_dict(asx_code=asx_code)
 
-    qis = imf_qis
-    qis['cash'] = cash_rate
-    qis['div'] = dividend
+    # Ingest QIs.
+    qis = ingest_qis(qis_ingest_dict)
 
     # Ingest share.
-    share = share_ingest(asx_code, share_ingest_params)
+    share_path = "data/{asx_code}".format(asx_code=asx_code)
+    share = ingest_share(asx_code, share_path)
 
     collated_share = share.apply(lambda row: collate_qis(row, qis), axis=1)
+    filename = "{path}/{name}.csv".format(path=share_path, name='features')
+    collated_share.to_csv(filename, index=False)
 
     return collated_share
 
 
-def feature_extraction(asx_code):
-    df = collate(asx_code)
-    filename = make_extracted_filename(asx_code=asx_code)
-    df.to_csv(filename, index=False)
-    return df
-
-
-def feature_selection(asx_code, target_col='close'):
+def feature_selection(asx_code, target_col='close', n_iter=100, n_fold=3):
     """
         Select QIs (features) that influence the share's price most significantly.
     """
@@ -206,8 +171,8 @@ def feature_selection(asx_code, target_col='close'):
     X = df[qi_names]
     y = df[target_col]
 
-    svr = LinearSVR(max_iter=1000)
-    selector = RFECV(estimator=svr, cv=5)
+    svr = LinearSVR(max_iter=n_iter)
+    selector = RFECV(estimator=svr, cv=n_fold)
     selector.fit(X, y)
 
     selected_qi_names = np.array(qi_names)[selector.support_]
@@ -241,12 +206,12 @@ def fit(asx_code, estimator, feature_cols, target_col='close'):
     X = df[feature_cols]
     y = df[target_col]
 
-    estimator.set_params(max_iter=-1)
-    fitted_svr = estimator.fit(X, y)
+    estimator.set_params(max_iter=10000)
+    estimator.fit(X, y)
 
     output_filename = make_fitted_filename(asx_code=asx_code)
-    dump(fitted_svr, output_filename)
-    return fitted_svr
+    dump(estimator, output_filename)
+    return estimator
 
 
 def predict(asx_code):
@@ -276,7 +241,7 @@ def main(asx_code):
     # 1 feature engineering
     # --------------------------------------------------------------------------------------------------
     # 1.1 feature extraction
-    # feature_extraction(asx_code=asx_code)
+    feature_extraction(asx_code=asx_code)
 
     # 1.2 feature selection
     # feature_selection(asx_code=asx_code)
@@ -295,7 +260,7 @@ def main(asx_code):
     # --------------------------------------------------------------------------------------------------
     # 3 apply / predict
     # --------------------------------------------------------------------------------------------------
-    predict(asx_code=asx_code)
+    # predict(asx_code=asx_code)
 
 
 if __name__ == "__main__":
