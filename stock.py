@@ -18,7 +18,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVR
 
 
-def ingest_imf_qi(df):
+def ingest_func_imf_qi(df):
     qi = df.loc["Australia"]
     qi.index = pd.to_datetime(qi.index)
     qi = pd.to_numeric(qi, errors='coerce', downcast='float').dropna()
@@ -26,13 +26,13 @@ def ingest_imf_qi(df):
     return qi
 
 
-def ingest_cash_rate(df):
+def ingest_func_cash_rate(df):
     qi = df["cash_rate_target"]
 
     return qi
 
 
-def ingest_div(df):
+def ingest_func_div(df):
     qi = df["dividend"]
     # Deal with duplicated dates.
     qi = qi.groupby(qi.index).agg(sum)
@@ -71,21 +71,21 @@ def construct_qis_ingest_dict(asx_code):
         qis_ingest_dict[qi_name] = {
             'filename': "{path}/{name}.csv".format(path=constant_qi_path, name=qi_name),
             'ingest_params': imf_qi_ingest_params,
-            'ingest_func': ingest_imf_qi,
+            'ingest_func': ingest_func_imf_qi,
         }
 
     qi_name = 'cash_rate'
     qis_ingest_dict[qi_name] = {
         'filename': "{path}/{name}.csv".format(path=constant_qi_path, name=qi_name),
         'ingest_params': cash_rate_ingest_params,
-        'ingest_func': ingest_cash_rate,
+        'ingest_func': ingest_func_cash_rate,
     }
 
     qi_name = 'div'
     qis_ingest_dict[qi_name] = {
         'filename': "{path}/{name}.csv".format(path=variable_qi_path, name=qi_name),
         'ingest_params': div_ingest_params,
-        'ingest_func': ingest_div,
+        'ingest_func': ingest_func_div,
     }
 
     return qis_ingest_dict
@@ -101,7 +101,8 @@ def ingest_qis(qis_ingest_dict):
     return qis_dict
 
 
-def ingest_share(asx_code, share_path):
+def ingest_share(asx_code):
+    share_path = "data/{asx_code}".format(asx_code=asx_code)
     share_ingest_params = {
         'header': 0,
         'parse_dates': ['date'],
@@ -142,20 +143,34 @@ def extract_qis(row, qis):
     return row
 
 
+def save_features(asx_code, df):
+    share_path = "data/{asx_code}".format(asx_code=asx_code)
+
+    filename = "{path}/{name}.csv".format(path=share_path, name='features')
+    df.to_csv(filename, index=False)
+
+
+def load_features(asx_code):
+    share_path = "data/{asx_code}".format(asx_code=asx_code)
+
+    filename = "{path}/{name}.csv".format(path=share_path, name=asx_code)
+    df = pd.read_csv(filepath_or_buffer=filename)
+
+    return df
+
+
 def feature_extraction(asx_code):
-    # Construct QIs.
+    # Construct ingest_dict for QIs.
     qis_ingest_dict = construct_qis_ingest_dict(asx_code=asx_code)
 
     # Ingest QIs.
     qis = ingest_qis(qis_ingest_dict)
 
     # Ingest share.
-    share_path = "data/{asx_code}".format(asx_code=asx_code)
-    share = ingest_share(asx_code, share_path)
+    share = ingest_share(asx_code)
 
     collated_share = share.apply(lambda row: extract_qis(row, qis), axis=1)
-    filename = "{path}/{name}.csv".format(path=share_path, name='features')
-    collated_share.to_csv(filename, index=False)
+    save_features(asx_code=asx_code, df=collated_share)
 
     return collated_share
 
@@ -164,7 +179,8 @@ def feature_selection(asx_code, target_col='close', n_iter=100, n_fold=3):
     """
         Select QIs (features) that influence the share's price most significantly.
     """
-    filename = make_extracted_filename(asx_code=asx_code)
+    share_path = "data/{asx_code}".format(asx_code=asx_code)
+    filename = "{path}/{name}.csv".format(path=share_path, name='features')
     df = pd.read_csv(filename)
     qi_names = list(set(df.columns) - {'date', target_col})
 
@@ -246,7 +262,6 @@ def main(asx_code):
     # 1.2 feature selection
     # feature_selection(asx_code=asx_code)
     selected_qi_names = ['volume', 'gdp', 'ppl', 'cash', 'div']
-
     # --------------------------------------------------------------------------------------------------
     # 2 fit
     # --------------------------------------------------------------------------------------------------
