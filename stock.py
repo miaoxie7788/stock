@@ -10,10 +10,9 @@
         - share (ASX)       https://www.marketindex.com.au/
 """
 
-import numpy as np
 import pandas as pd
 from joblib import dump, load
-from sklearn.feature_selection import RFECV
+from sklearn.feature_selection import SelectFromModel
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVR
 
@@ -153,13 +152,13 @@ def save_features(asx_code, df):
 def load_features(asx_code):
     share_path = "data/{asx_code}".format(asx_code=asx_code)
 
-    filename = "{path}/{name}.csv".format(path=share_path, name=asx_code)
+    filename = "{path}/features.csv".format(path=share_path)
     df = pd.read_csv(filepath_or_buffer=filename)
 
     return df
 
 
-def feature_extraction(asx_code):
+def extract_features(asx_code):
     # Construct ingest_dict for QIs.
     qis_ingest_dict = construct_qis_ingest_dict(asx_code=asx_code)
 
@@ -175,30 +174,34 @@ def feature_extraction(asx_code):
     return collated_share
 
 
-def feature_selection(asx_code, target_col='close', n_iter=100, n_fold=3):
+def select_features(asx_code, target_col='close', n_iter=100, n_fold=3):
     """
         Select QIs (features) that influence the share's price most significantly.
     """
-    share_path = "data/{asx_code}".format(asx_code=asx_code)
-    filename = "{path}/{name}.csv".format(path=share_path, name='features')
-    df = pd.read_csv(filename)
+
+    df = load_features(asx_code=asx_code)
+    print(df)
     qi_names = list(set(df.columns) - {'date', target_col})
 
     X = df[qi_names]
     y = df[target_col]
 
     svr = LinearSVR(max_iter=n_iter)
-    selector = RFECV(estimator=svr, cv=n_fold)
-    selector.fit(X, y)
 
-    selected_qi_names = np.array(qi_names)[selector.support_]
-    print("The most significant QIs are:", list(selected_qi_names))
-    return selected_qi_names
+    # RFECV
+    # selector = RFECV(estimator=svr, cv=n_fold)
+    # selector.fit(X, y)
+    #
+    # selected_qi_names = np.array(qi_names)[selector.support_]
+    # print("The most significant QIs are:", list(selected_qi_names))
+    # return selected_qi_names
+
+    # SelectFromModel
+    model = SelectFromModel(svr, prefit=True)
 
 
-def parameter_selection(asx_code, feature_cols, target_col='close'):
-    filename = make_extracted_filename(asx_code=asx_code)
-    df = pd.read_csv(filename)
+def select_parameters(asx_code, feature_cols, target_col='close'):
+    df = load_features(asx_code=asx_code)
 
     X = df[feature_cols]
     y = df[target_col]
@@ -257,10 +260,10 @@ def main(asx_code):
     # 1 feature engineering
     # --------------------------------------------------------------------------------------------------
     # 1.1 feature extraction
-    feature_extraction(asx_code=asx_code)
+    # feature_extraction(asx_code=asx_code)
 
     # 1.2 feature selection
-    # feature_selection(asx_code=asx_code)
+    select_features(asx_code=asx_code)
     selected_qi_names = ['volume', 'gdp', 'ppl', 'cash', 'div']
     # --------------------------------------------------------------------------------------------------
     # 2 fit
