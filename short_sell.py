@@ -16,7 +16,7 @@ def get_asx_daily_short_sell(url="https://www.asx.com.au/data/shortsell.txt"):
     resp = requests.get(url, allow_redirects=True)
 
     today = date.today().strftime("%Y%m%d")
-    txt_filename = 'data/short_sell/asx_short_sell_{date}.txt'.format(date=today)
+    txt_filename = 'data/short_sell/txt/asx_short_sell_{date}.txt'.format(date=today)
 
     with open(txt_filename, 'wb') as f:
         f.write(resp.content)
@@ -28,7 +28,7 @@ def transform_asx_daily_short_sell(short_sell_date):
     """
             Transform the ASX short sell data of the given day from txt to csv.
     """
-    txt_filename = 'data/short_sell/asx_short_sell_{date}.txt'.format(date=short_sell_date)
+    txt_filename = 'data/short_sell/txt/asx_short_sell_{date}.txt'.format(date=short_sell_date)
 
     columns = ["asx_code", "company_name", "product_class", "reported_gross_short_sells", "issued_capital",
                "percentage"]
@@ -66,13 +66,13 @@ def transform_asx_daily_short_sell(short_sell_date):
 
         df = pd.DataFrame(df)
 
-        csv_filename = 'data/short_sell/asx_short_sell_{date}.csv'.format(date=today)
+        csv_filename = 'data/short_sell/csv/asx_short_sell_{date}.csv'.format(date=today)
         df.to_csv(csv_filename, header=True, index=False)
 
 
 if __name__ == "__main__":
     # execute only if run as a script
-    # download_asx_daily_short_sell()
+    # get_asx_daily_short_sell()
 
     days = ["20200911", "20200912", "20200913", "20200914", "20200915", "20200916"]
 
