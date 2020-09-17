@@ -71,10 +71,8 @@ def transform_asx_daily_short_sell(short_sell_date):
 
 
 if __name__ == "__main__":
-    # execute only if run as a script
-    # get_asx_daily_short_sell()
+    # Get today's daily short sell data.
+    get_asx_daily_short_sell()
 
-    days = ["20200911", "20200912", "20200913", "20200914", "20200915", "20200916"]
-
-    for day in days:
-        transform_asx_daily_short_sell(day)
+    # Transform today's daily short sell data, from txt to csv.
+    transform_asx_daily_short_sell(date.today().strftime("%Y%m%d"))
