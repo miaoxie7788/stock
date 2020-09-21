@@ -40,7 +40,7 @@ def ingest_func_div(df):
 
 
 def construct_qis_ingest_dict(asx_code):
-    constant_qi_path = "data/constant"
+    constant_qi_path = "../data/constant"
     variable_qi_path = "data/{asx_code}".format(asx_code=asx_code)
 
     # constant qi: imf qis (acc, cpi, fin, gdp, ppl), cash rate
