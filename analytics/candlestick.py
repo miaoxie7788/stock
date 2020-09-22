@@ -9,11 +9,32 @@
 
 import os
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
 
-def is_pattern_hammer(price, low_th=0.02, body_th=0.5, high_th=0.1):
+def is_trend_bullish(daily_prices):
+    """
+        A couple of consecutive daily close prices are fitted with a 1st order linear model y = ax + b.
+        If a > 0, the trend is bullish otherwise bearish.
+    """
+    close_prices = [daily_price["close"] for daily_price in daily_prices if not np.isnan(daily_price["close"])]
+
+    n = len(close_prices)
+    if n <= 1:
+        return None
+
+    x = np.array(range(1, n + 1))
+    y = np.array(close_prices)
+
+    slope, _ = list(np.polyfit(x, y, 1))
+    if slope > 0:
+        return True
+    return False
+
+
+def is_pattern_hammer(daily_price, low_th=0.02, body_th=0.5, high_th=0.1):
     """
         A black or a white candlestick that consists of a small body near the high with a little or no upper shadow and
         a long lower tail. Considered a bullish pattern during a downtrend.
@@ -22,7 +43,10 @@ def is_pattern_hammer(price, low_th=0.02, body_th=0.5, high_th=0.1):
         (open - close) / low_deviation <= body
         (high - open) / low_deviation <= high_deviation
     """
-    open_price, close_price, high_price, low_price = price['open'], price['close'], price['high'], price['low']
+    open_price = daily_price['open']
+    close_price = daily_price['close']
+    high_price = daily_price['high']
+    low_price = daily_price['low']
 
     x = high_price - open_price
     y = open_price - close_price
@@ -63,12 +87,18 @@ if __name__ == "__main__":
     df = pd.read_csv(csv_filename)
 
     k = 0
-    for _, price in df.iterrows():
-        # print(price)
-        a = is_pattern_hammer(price)
-        if a:
-            k += 1
-            print(price)
+    for t, price in df.iterrows():
+
+        hammer = is_pattern_hammer(price)
+        if hammer:
+            hist_prices = list(df.iloc[t - 3: t].T.to_dict().values())
+            if not is_trend_bullish(hist_prices):
+                k += 1
+                print("a turning point is found.")
+                print(price)
+                close_prices = [hist_price["close"] for hist_price in hist_prices if not np.isnan(hist_price["close"])]
+                print(close_prices)
+                print("\n")
     print(k)
 
     plot_candlestick(stock_code, stock_path="data/asx_stock/csv")
