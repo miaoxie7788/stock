@@ -49,7 +49,7 @@ def is_hammer(price, low_th=0.02, body_th=0.5, high_th=0.01):
     d2 = y2 - y1
     d3 = y1 - y4
 
-    if d2 > 0:
+    if d2 > 0 and d3 > 0:
         if (d3 / y1 >= low_th) and (d2 / d3 <= body_th) and (d1 / y2 <= high_th):
             return True
 
@@ -68,7 +68,7 @@ def is_inverted_hammer(price, low_th=0.01, body_th=0.5, high_th=0.02):
     d2 = y2 - y1
     d3 = y1 - y4
 
-    if d2 > 0:
+    if d1 > 0 and d2 > 0:
         if (d3 / y1 <= low_th) and (d2 / d1 <= body_th) and (d1 / y2 >= high_th):
             return True
 
@@ -79,7 +79,6 @@ def detect_hammer(price_df, window_size=5):
     """
         Detect hammers.
     """
-
     df["is_hammer"] = price_df.apply(is_hammer, axis="columns")
     neighbour_prices_dict = dict()
     for _, price in df[df.is_hammer].iterrows():
@@ -90,7 +89,24 @@ def detect_hammer(price_df, window_size=5):
                 print("A bullish trend reversal is signaled at {date}".format(date=price["date"]))
                 neighbour_prices_dict[price["date"]] = price_df.iloc[x - window_size:x + window_size]
 
-    plot_candlestick(neighbour_prices_dict["2018-04-27"])
+    plot_candlestick(neighbour_prices_dict["2008-01-09"])
+
+
+def detect_inverted_hammer(price_df, window_size=5):
+    """
+        Detect inverted hammers.
+    """
+    df["is_inverted_hammer"] = price_df.apply(is_inverted_hammer, axis="columns")
+    neighbour_prices_dict = dict()
+    for _, price in df[df.is_inverted_hammer].iterrows():
+        x = price.name
+        if x >= window_size:
+            hist_prices = price_df.iloc[x - window_size:x + 1].to_dict(orient="records")
+            if is_bullish_or_bearish_trend(hist_prices) == "bullish":
+                print("A bearish trend reversal is signaled at {date}".format(date=price["date"]))
+                neighbour_prices_dict[price["date"]] = price_df.iloc[x - window_size:x + window_size]
+
+    plot_candlestick(neighbour_prices_dict["2008-04-24"])
 
 
 def plot_candlestick(price_df):
@@ -108,8 +124,9 @@ if __name__ == "__main__":
     # asx_stock_watchlist = ["tls.ax", "wbc.ax", "nov.ax", "cba.ax", "hack.ax", "ltr.ax"]
 
     # plot_candlestick("tls.ax")
-    stock_code = "wbc.ax"
+    stock_code = "cba.ax"
     stock_path = "data/asx_stock/csv"
-    csv_filename = os.path.join(stock_path, stock_code, "hist_price_19880128_20200921.csv")
+    csv_filename = os.path.join(stock_path, stock_code, "hist_price_19910930_20200921.csv")
     df = pd.read_csv(csv_filename)
-    detect_hammer(df, window_size=5)
+    # detect_hammer(df, window_size=5)
+    detect_inverted_hammer(df, window_size=5)
