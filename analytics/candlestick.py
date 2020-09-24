@@ -14,14 +14,14 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-def is_bullish_or_bearish_trend(daily_prices, key="close"):
+def is_bullish_or_bearish_trend(prices, key="close"):
     """
         A couple of consecutive daily prices (by default close prices) are fitted with a 1st order linear model y = ax
         + b. If a > 0, the trend is bullish otherwise bearish.
 
-        daily_price = {"open": y1, "close": y2, "high": y3, "low": y4}
+        price = {"open": y1, "close": y2, "high": y3, "low": y4}
     """
-    close_prices = [daily_price[key] for daily_price in daily_prices if not np.isnan(daily_price[key])]
+    close_prices = [price[key] for price in prices if not np.isnan(price[key])]
 
     n = len(close_prices)
     if n <= 1:
@@ -36,15 +36,14 @@ def is_bullish_or_bearish_trend(daily_prices, key="close"):
     return "bearish"
 
 
-def is_hammer(daily_price, low_th=0.02, body_th=0.5, high_th=0.01):
+def is_hammer(price, low_th=0.02, body_th=0.5, high_th=0.01):
     """
         A black or a white candlestick that consists of a small body near the high with a little or no upper shadow and
         a long lower tail. Considered a bullish pattern during a downtrend.
 
-        daily_price = {"open": y1, "close": y2, "high": y3, "low": y4}
-
+        price = {"open": y1, "close": y2, "high": y3, "low": y4}
     """
-    y1, y2, y3, y4 = daily_price['open'], daily_price['close'], daily_price['high'], daily_price['low']
+    y1, y2, y3, y4 = price['open'], price['close'], price['high'], price['low']
 
     d1 = y3 - y2
     d2 = y2 - y1
@@ -57,13 +56,13 @@ def is_hammer(daily_price, low_th=0.02, body_th=0.5, high_th=0.01):
     return False
 
 
-def is_inverted_hammer(daily_price, low_th=0.01, body_th=0.5, high_th=0.02):
+def is_inverted_hammer(price, low_th=0.01, body_th=0.5, high_th=0.02):
     """
         A black or a white candlestick in an upside-down hammer position.
 
-
+        price = {"open": y1, "close": y2, "high": y3, "low": y4}
     """
-    y1, y2, y3, y4 = daily_price['open'], daily_price['close'], daily_price['high'], daily_price['low']
+    y1, y2, y3, y4 = price['open'], price['close'], price['high'], price['low']
 
     d1 = y3 - y2
     d2 = y2 - y1
@@ -76,7 +75,22 @@ def is_inverted_hammer(daily_price, low_th=0.01, body_th=0.5, high_th=0.02):
     return False
 
 
-# def detect_pattern_hammer(price_df):
+def detect_hammer(price_df, window_size=5):
+    """
+        Detect hammers.
+    """
+
+    df["is_hammer"] = price_df.apply(is_hammer, axis="columns")
+    neighbour_prices_dict = dict()
+    for _, price in df[df.is_hammer].iterrows():
+        x = price.name
+        if x >= window_size:
+            hist_prices = price_df.iloc[x - window_size:x + 1].to_dict(orient="records")
+            if is_bullish_or_bearish_trend(hist_prices) == "bearish":
+                print("A bullish trend reversal is signaled at {date}".format(date=price["date"]))
+                neighbour_prices_dict[price["date"]] = price_df.iloc[x - window_size:x + window_size]
+
+    plot_candlestick(neighbour_prices_dict["2018-04-27"])
 
 
 def plot_candlestick(price_df):
@@ -98,22 +112,4 @@ if __name__ == "__main__":
     stock_path = "data/asx_stock/csv"
     csv_filename = os.path.join(stock_path, stock_code, "hist_price_19880128_20200921.csv")
     df = pd.read_csv(csv_filename)
-
-    points = []
-    k = 0
-    for t, price in df.iterrows():
-        hammer = is_hammer(price)
-        if hammer:
-            hist_prices = list(df.iloc[t - 5: t + 1].T.to_dict().values())
-            if is_bullish_or_bearish_trend(hist_prices) == "bearish":
-                print("a turning point is found.")
-                print(price)
-                ys = [y["close"] for y in hist_prices if not np.isnan(y["close"])]
-                print(ys)
-                points.append(t)
-                k += 1
-                print(k)
-
-    print(points)
-    index = points[8]
-    plot_candlestick(df.iloc[index - 10: index + 10])
+    detect_hammer(df, window_size=5)
