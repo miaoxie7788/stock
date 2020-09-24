@@ -57,7 +57,7 @@ def is_hammer(daily_price, low_th=0.02, body_th=0.5, high_th=0.01):
     return False
 
 
-def is_inverted_hammer(daily_price, low_th=0.02, body_th=0.5, high_th=0.01):
+def is_inverted_hammer(daily_price, low_th=0.01, body_th=0.5, high_th=0.02):
     """
         A black or a white candlestick in an upside-down hammer position.
 
@@ -65,16 +65,15 @@ def is_inverted_hammer(daily_price, low_th=0.02, body_th=0.5, high_th=0.01):
     """
     y1, y2, y3, y4 = daily_price['open'], daily_price['close'], daily_price['high'], daily_price['low']
 
-    d1 = y3 - y1
-    d2 = y1 - y2
-    d3 = y2 - y4
+    d1 = y3 - y2
+    d2 = y2 - y1
+    d3 = y1 - y4
 
     if d2 > 0:
-        if (d3 / y2 >= low_th) and (d2 / d3 <= body_th) and (d1 / y1 <= high_th):
+        if (d3 / y1 <= low_th) and (d2 / d1 <= body_th) and (d1 / y2 >= high_th):
             return True
 
     return False
-    pass
 
 
 # def detect_pattern_hammer(price_df):
