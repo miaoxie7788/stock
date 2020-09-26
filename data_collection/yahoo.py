@@ -90,4 +90,4 @@ def get_asx_stock_historical_data(asx_stock_codes):
 if __name__ == "__main__":
     # Get asx stock historical price data.
     asx_stock_watchlist = ["tls.ax", "wbc.ax", "nov.ax", "cba.ax", "hack.ax", "ltr.ax"]
-    get_asx_stock_historical_data(asx_stock_watchlist)
+    get_asx_stock_historical_data(["300369.SZ"])
