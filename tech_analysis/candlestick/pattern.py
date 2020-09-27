@@ -70,25 +70,38 @@ def is_big_black_candle(candlestick, t1, t2, t3):
     return False
 
 
-def is_hammer(candlestick, t1, t2, t3):
+def is_big_white_candle(candlestick, t1, t2, t3):
+    """
+        Big White Candle Has an unusually long white body with a wide range between high and low of the day. Prices
+        open near the low and close near the high. Considered a bullish pattern.
+    """
+    if is_bullish_or_bearish_candlestick(candlestick) != "bullish":
+        return False
+
+    y1, y2, y3, y4, d1, d2, d3 = extract_candlestick(candlestick)
+
+    if d1 > 0 and d2 > 0 and d3 > 0:
+        if (d1 / y2 <= t1) and (d2 / y1 > t2) and (d3 / y1 <= t3):
+            return True
+
+    return False
+
+
+def is_hammer(candlestick, t1, t3):
     """
         A black or a white candlestick that consists of a small body near the high with a little or no upper shadow and
         a long lower tail. Considered a bullish pattern during a downtrend.
     """
     y1, y2, y3, y4, d1, d2, d3 = extract_candlestick(candlestick)
 
-    if d2 > 0 and d3 > 0:
-        if is_bullish_or_bearish_candlestick(candlestick) == "bullish":
-            if (d1 / y2 <= t1) and (d2 / y1 <= t2) and (d3 / y1 > t3):
-                return True
-        else:
-            if (d1 / y1 <= t1) and (d2 / y2 <= t2) and (d3 / y2 > t3):
-                return True
+    if d1 > 0 and d2 > 0 and d3 > 0:
+        if d2 / d1 > t1 and d3 / d2 > t3:
+            return True
 
     return False
 
 
-def is_inverted_hammer(candlestick, t1=0.01, t2=0.002, t3=0.001):
+def is_inverted_hammer(candlestick, t1, t2, t3):
     """
         A black or a white candlestick in an upside-down hammer position.
     """
