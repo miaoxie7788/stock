@@ -53,7 +53,7 @@ def is_bullish_or_bearish_trend(candlesticks, key="close"):
 
 
 # Simple patterns.
-def is_big_black_candle(candlestick):
+def is_big_black_candle(candlestick, t1, t2, t3):
     """
         Big Black Candle has an unusually long black body with a wide range between high and low. Prices open near the
         high and close near the low. Considered a bearish pattern.
@@ -63,14 +63,14 @@ def is_big_black_candle(candlestick):
 
     y1, y2, y3, y4, d1, d2, d3 = extract_candlestick(candlestick)
 
-    if d2 > 0:
-        if (d2 / y1 >= 0.05) and (d1 / y1 <= 0.01) and (d3 / y2 <= 0.01):
+    if d1 > 0 and d2 > 0 and d3 > 0:
+        if (d1 / y1 <= t1) and (d2 / y1 > t2) and (d3 / y2 <= t3):
             return True
 
     return False
 
 
-def is_hammer(candlestick, t1=0.01, t2=0.5, t3=0.02):
+def is_hammer(candlestick, t1, t2, t3):
     """
         A black or a white candlestick that consists of a small body near the high with a little or no upper shadow and
         a long lower tail. Considered a bullish pattern during a downtrend.
@@ -78,21 +78,29 @@ def is_hammer(candlestick, t1=0.01, t2=0.5, t3=0.02):
     y1, y2, y3, y4, d1, d2, d3 = extract_candlestick(candlestick)
 
     if d2 > 0 and d3 > 0:
-        if (d3 / y1 >= t3) and (d2 / d3 <= t2) and (d1 / y2 <= t1):
-            return True
+        if is_bullish_or_bearish_candlestick(candlestick) == "bullish":
+            if (d1 / y2 <= t1) and (d2 / y1 <= t2) and (d3 / y1 > t3):
+                return True
+        else:
+            if (d1 / y1 <= t1) and (d2 / y2 <= t2) and (d3 / y2 > t3):
+                return True
 
     return False
 
 
-def is_inverted_hammer(candlestick, low_th=0.01, body_th=0.5, high_th=0.02):
+def is_inverted_hammer(candlestick, t1=0.01, t2=0.002, t3=0.001):
     """
         A black or a white candlestick in an upside-down hammer position.
     """
     y1, y2, y3, y4, d1, d2, d3 = extract_candlestick(candlestick)
 
     if d1 > 0 and d2 > 0:
-        if (d3 / y1 <= low_th) and (d2 / d1 <= body_th) and (d1 / y2 >= high_th):
-            return True
+        if is_bullish_or_bearish_candlestick(candlestick) == "bullish":
+            if (d1 / y2 > t1) and (d2 / y1 <= t2) and (d3 / y1 <= t3):
+                return True
+        else:
+            if (d1 / y1 > t1) and (d2 / y2 <= t2) and (d3 / y2 <= t3):
+                return True
 
     return False
 
