@@ -112,5 +112,5 @@ venv.bak/
 # data
 /data
 
-# tests
-/tests
+# test
+/test

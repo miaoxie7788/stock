@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 
-from tech_analysis.candlestick.pattern import is_hammer, is_bullish_or_bearish_trend
+from technical_analysis.candlestick.pattern import is_hammer, is_bullish_or_bearish_trend
 
 
 # TODO: move the scan functions to integration test.
