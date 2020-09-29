@@ -37,14 +37,14 @@ def is_bullish_or_bearish_trend(candlesticks, key="close"):
         A couple of consecutive daily prices (by default close prices) are fitted with a 1st order linear model y = ax
         + b. If a > 0, the trend is bullish otherwise bearish.
     """
-    close_prices = [candlestick[key] for candlestick in candlesticks if not np.isnan(candlestick[key])]
+    prices = [candlestick[key] for candlestick in candlesticks if not np.isnan(candlestick[key])]
 
-    n = len(close_prices)
+    n = len(prices)
     if n <= 1:
         return None
 
     x = np.array(range(1, n + 1))
-    y = np.array(close_prices)
+    y = np.array(prices)
 
     slope, _ = list(np.polyfit(x, y, 1))
     if slope > 0:
@@ -57,10 +57,14 @@ def is_market_bottom(candlesticks, key="low"):
         A couple of consecutive daily prices (by default low prices) present a bearish_trend.
         If the latest daily price is minimal, it is a market bottom; otherwise not.
     """
+    present_candlestick = candlesticks[-1]
+    history_candlesticks = candlesticks[:-1]
 
-    if is_bullish_or_bearish_trend(candlesticks) == "bearish":
-        low = [candlestick[key] for candlestick in candlesticks if not np.isnan(candlestick[key])]
-        if min(low) == low[-1]:
+    if is_bullish_or_bearish_trend(history_candlesticks) == "bearish":
+        present_price = present_candlestick[key]
+        history_prices = [candlestick[key] for candlestick in history_candlesticks if not np.isnan(candlestick[key])]
+
+        if present_price <= min(history_prices):
             return True
 
     return False
@@ -202,4 +206,18 @@ def is_inverted_hammer(candlestick, t1, t3, small_body=0.01):
 
     return False
 
+
 # Complex candlestick patterns.
+
+# Reversal signals.
+def is_dragonfly_doji_reversal(candlesticks, long_lower_shadow):
+    """
+        When appearing at market bottoms it is considered to be a reversal signal (bullish).
+    """
+
+    present_candlestick = candlesticks[-1]
+
+    if is_market_bottom(candlesticks) and is_dragonfly_doji(present_candlestick, long_lower_shadow=long_lower_shadow):
+        return True
+
+    return False

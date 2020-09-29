@@ -1,115 +1,52 @@
 """
     Scan candlestick patterns.
 """
-import os
 
-import pandas as pd
-import plotly.graph_objects as go
-
-from technical_analysis.candlestick.pattern import is_hammer, is_bullish_or_bearish_trend
+from technical_analysis.candlestick.pattern import is_bullish_or_bearish_trend, is_dragonfly_doji_reversal
 
 
-# TODO: move the scan functions to integration test.
+def scan_dragonfly_doji_reversal(df, window_size=3, long_lower_shadow=0.02):
+    n = len(df)
+    reversal_dict = dict()
+    for x in range(window_size, n):
+        candlesticks = df.iloc[x - window_size:x].to_dict(orient="records")
+        present_candlestick = candlesticks[-1]
+        if is_dragonfly_doji_reversal(candlesticks, long_lower_shadow=long_lower_shadow):
+            reversal_dict[present_candlestick["date"]] = df.iloc[x - window_size:x + window_size]
 
-
-def scan_hammer(price_df, window_size=5):
-    """
-        Scan hammers.
-    """
-
-    def parameterised_is_hammer(candlestick):
-        return is_hammer(candlestick, t1=4, t3=2, small_body=0.01)
-
-    df["is_hammer"] = price_df.apply(parameterised_is_hammer, axis="columns")
-    neighbour_prices_dict = dict()
-    for _, price in df[df.is_hammer].iterrows():
-        x = price.name
-        if x >= window_size:
-            hist_prices = price_df.iloc[x - window_size:x + 1].to_dict(orient="records")
-            if is_bullish_or_bearish_trend(hist_prices) == "bearish":
-                # print("A bullish trend reversal is signaled on {date}".format(date=price["date"]))
-                neighbour_prices_dict[price["date"]] = price_df.iloc[x - window_size:x + window_size]
-
-    n = len(neighbour_prices_dict)
+    n = len(reversal_dict)
     print("There are a total of {n} reversals.".format(n=n))
 
-    # Verify the effectiveness:
-    effective = 0
-    for date, neighbour_prices in neighbour_prices_dict.items():
-        future_prices = neighbour_prices.iloc[window_size:].to_dict(orient="records")
+    return reversal_dict
 
-        if is_bullish_or_bearish_trend(future_prices) == "bullish":
+
+def evaluate(reversal_dict, window_size=3):
+    effective = 0
+    for date, candlesticks in reversal_dict.items():
+        future_candlesticks = candlesticks.iloc[window_size:].to_dict(orient="records")
+
+        if is_bullish_or_bearish_trend(future_candlesticks) == "bullish":
             effective += 1
             print("It is effective on {date}".format(date=date))
         else:
             print("It is not effective on {date}".format(date=date))
+    if len(reversal_dict) != 0:
+        print("The successful rate is: {rate}".format(rate=effective / len(reversal_dict)))
 
-    print("The successful rate is: {rate}".format(rate=effective / n))
-    # plot_candlestick(neighbour_prices_dict["1999-05-12"])
-
-
-# def scan_inverted_hammer(price_df, window_size=5):
-#     """
-#         Scan inverted hammers.
-#     """
+# if __name__ == "__main__":
+#     # asx_stock_watchlist = ["tls.ax", "wbc.ax", "nov.ax", "cba.ax", "hack.ax", "ltr.ax"]
 #
-#     def parameterised_is_inverted_hammer(candlestick):
-#         return is_inverted_hammer(candlestick, t1=0.01, t2=0.002, t3=0.001)
+#     # plot_candlestick("tls.ax")
+#     stock_path = "data/asx_stock/csv"
 #
-#     df["is_inverted_hammer"] = price_df.apply(parameterised_is_inverted_hammer, axis="columns")
-#     neighbour_prices_dict = dict()
-#     for _, price in df[df.is_inverted_hammer].iterrows():
-#         x = price.name
-#         if x >= window_size:
-#             hist_prices = price_df.iloc[x - window_size:x + 1].to_dict(orient="records")
-#             if is_bullish_or_bearish_trend(hist_prices) == "bullish":
-#                 print("A bearish trend reversal is signaled at {date}".format(date=price["date"]))
-#                 neighbour_prices_dict[price["date"]] = price_df.iloc[x - window_size:x + window_size]
+#     wbc = "wbc.ax"
+#     # df = pd.read_csv(os.path.join(stock_path, wbc, "hist_price_19880128_20200921.csv"))
+#     # scan_hammer(df, window_size=5)
+#     # scan_inverted_hammer(df, window_size=5)
+#     # scan_dragonfly_doji(df, window_size=3)
 #
-#     n = len(neighbour_prices_dict)
-#     print("There are a total of {n} reversals.".format(n=n))
-#
-#     # Verify the effectiveness:
-#     effective = 0
-#     for date, neighbour_prices in neighbour_prices_dict.items():
-#         future_prices = neighbour_prices.iloc[window_size:].to_dict(orient="records")
-#
-#         if is_bullish_or_bearish_trend(future_prices) == "bearish":
-#             effective += 1
-#             print("It is effective on {date}".format(date=date))
-#         else:
-#             print("It is not effective on {date}".format(date=date))
-#
-#     print("The successful rate is: {rate}".format(rate=effective / n))
-#
-#     # plot_candlestick(neighbour_prices_dict["2008-04-24"])
-
-
-def plot_candlestick(price_df):
-    fig = go.Figure(data=[go.Candlestick(
-        x=price_df['date'],
-        open=price_df['open'],
-        high=price_df['high'],
-        low=price_df['low'],
-        close=price_df['close'])])
-
-    fig.show()
-
-
-if __name__ == "__main__":
-    # asx_stock_watchlist = ["tls.ax", "wbc.ax", "nov.ax", "cba.ax", "hack.ax", "ltr.ax"]
-
-    # plot_candlestick("tls.ax")
-    stock_path = "data/asx_stock/csv"
-
-    wbc = "wbc.ax"
-    # df = pd.read_csv(os.path.join(stock_path, wbc, "hist_price_19880128_20200921.csv"))
-    # scan_hammer(df, window_size=5)
-    # scan_inverted_hammer(df, window_size=5)
-    # scan_dragonfly_doji(df, window_size=3)
-
-    tls = "tls.ax"
-    df = pd.read_csv(os.path.join(stock_path, tls, "hist_price_19971127_20200921.csv"))
-    # scan_hammer(df, window_size=7)
-    # scan_inverted_hammer(df, window_size=5)
-    scan_dragonfly_doji(df, window_size=7)
+#     tls = "tls.ax"
+#     df = pd.read_csv(os.path.join(stock_path, tls, "hist_price_19971127_20200921.csv"))
+#     # scan_hammer(df, window_size=7)
+#     # scan_inverted_hammer(df, window_size=5)
+#     scan_reversal_dragonfly_doji(df, window_size=7)
