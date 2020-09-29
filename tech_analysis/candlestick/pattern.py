@@ -37,7 +37,7 @@ def is_bullish_or_bearish_trend(candlesticks, key="close"):
         A couple of consecutive daily prices (by default close prices) are fitted with a 1st order linear model y = ax
         + b. If a > 0, the trend is bullish otherwise bearish.
     """
-    close_prices = [price[key] for price in candlesticks if not np.isnan(price[key])]
+    close_prices = [candlestick[key] for candlestick in candlesticks if not np.isnan(candlestick[key])]
 
     n = len(close_prices)
     if n <= 1:
@@ -52,7 +52,21 @@ def is_bullish_or_bearish_trend(candlesticks, key="close"):
     return "bearish"
 
 
-# Simple patterns.
+def is_market_bottom(candlesticks, key="low"):
+    """
+        A couple of consecutive daily prices (by default low prices) present a bearish_trend.
+        If the latest daily price is minimal, it is a market bottom; otherwise not.
+    """
+
+    if is_bullish_or_bearish_trend(candlesticks) == "bearish":
+        low = [candlestick[key] for candlestick in candlesticks if not np.isnan(candlestick[key])]
+        if min(low) == low[-1]:
+            return True
+
+    return False
+
+
+# Simple candlestick patterns.
 def is_big_black_candle(candlestick, t1, t3, long_body=0.05):
     """
         Big Black Candle has an unusually long black body with a wide range between high and low. Prices open near the
@@ -188,4 +202,4 @@ def is_inverted_hammer(candlestick, t1, t3, small_body=0.01):
 
     return False
 
-# Complex patterns.
+# Complex candlestick patterns.
