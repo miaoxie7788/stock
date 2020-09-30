@@ -70,6 +70,24 @@ def is_market_bottom(candlesticks, key="low"):
     return False
 
 
+def is_market_top(candlesticks, key="high"):
+    """
+        A couple of consecutive daily prices (by default high prices) present a bullish_trend.
+        If the latest daily price is maximal, it is a market top; otherwise not.
+    """
+    present_candlestick = candlesticks[-1]
+    history_candlesticks = candlesticks[:-1]
+
+    if is_bullish_or_bearish_trend(history_candlesticks) == "bullish":
+        present_price = present_candlestick[key]
+        history_prices = [candlestick[key] for candlestick in history_candlesticks if not np.isnan(candlestick[key])]
+
+        if present_price >= max(history_prices):
+            return True
+
+    return False
+
+
 # Simple candlestick patterns.
 def is_big_black_candle(candlestick, t1, t3, long_body=0.05):
     """
@@ -218,6 +236,18 @@ def is_dragonfly_doji_reversal(candlesticks, long_lower_shadow):
     present_candlestick = candlesticks[-1]
 
     if is_market_bottom(candlesticks) and is_dragonfly_doji(present_candlestick, long_lower_shadow=long_lower_shadow):
+        return True
+
+    return False
+
+
+def is_gravestone_doji_reversal(candlesticks, long_upper_shadow):
+    """
+        When it appears at market top it is considered a reversal signal (bearish).
+    """
+    present_candlestick = candlesticks[-1]
+
+    if is_market_top(candlesticks) and is_gravestone_doji(present_candlestick, long_upper_shadow=long_upper_shadow):
         return True
 
     return False
