@@ -89,10 +89,10 @@ def is_market_top(candlesticks, key="high"):
 
 
 # Simple candlestick patterns.
-def is_big_black_candle(candlestick, t1, t3, long_body=0.05):
+def is_big_black_candle(candlestick, t1=5, t3=5, long_body=0.05):
     """
-        Big Black Candle has an unusually long black body with a wide range between high and low. Prices open near the
-        high and close near the low. Considered a bearish pattern.
+        Has an unusually long black body with a wide range between high and low. Prices open near the high and close
+        near the low. Considered a bearish pattern.
     """
     if is_bullish_or_bearish_candlestick(candlestick) != "bearish":
         return False
@@ -109,10 +109,10 @@ def is_big_black_candle(candlestick, t1, t3, long_body=0.05):
     return False
 
 
-def is_big_white_candle(candlestick, t1, t3, long_body=0.05):
+def is_big_white_candle(candlestick, t1=5, t3=5, long_body=0.05):
     """
-        Big White Candle Has an unusually long white body with a wide range between high and low of the day. Prices
-        open near the low and close near the high. Considered a bullish pattern.
+        Has an unusually long white body with a wide range between high and low of the day. Prices open near the low
+        and close near the high. Considered a bullish pattern.
     """
     if is_bullish_or_bearish_candlestick(candlestick) != "bullish":
         return False
@@ -131,21 +131,21 @@ def is_big_white_candle(candlestick, t1, t3, long_body=0.05):
 
 def is_black_body():
     """
-        Black Body Formed when the opening price is higher than the closing price. Considered to be a bearish signal.
+        Formed when the opening price is higher than the closing price. Considered to be a bearish signal.
     """
     pass
 
 
 def is_white_body():
     """
-        White Body Formed when the closing price is higher than the opening price and considered a bullish signal.
+        Formed when the closing price is higher than the opening price and considered a bullish signal.
     """
     pass
 
 
 def is_doji(candlestick):
     """
-        Doji Formed when opening and closing prices are virtually the same. The lengths of shadows can vary.
+        Formed when opening and closing prices are virtually the same. The lengths of shadows can vary.
     """
     _, _, _, _, d1, d2, d3 = extract_candlestick(candlestick)
 
@@ -157,7 +157,7 @@ def is_doji(candlestick):
 
 def is_long_legged_doji(candlestick, long_upper_shadow, long_lower_shadow):
     """
-        Long-Legged Doji Consists of a Doji with very long upper and lower shadows. Indicates strong forces balanced in
+        Consists of a Doji with very long upper and lower shadows. Indicates strong forces balanced in
         opposition.
     """
     pass
@@ -165,9 +165,8 @@ def is_long_legged_doji(candlestick, long_upper_shadow, long_lower_shadow):
 
 def is_dragonfly_doji(candlestick, long_lower_shadow=0.05):
     """
-        Dragonfly Doji Formed when the opening and the closing prices are at the highest of the day. If it has a longer
-        lower shadow it signals a more bullish trend. When appearing at market bottoms it is considered to be a reversal
-        signal.
+        Formed when the opening and the closing prices are at the highest of the day. If it has a longer lower shadow
+        it signals a more bullish trend. When appearing at market bottoms it is considered to be a reversal signal.
     """
     y1, y2, _, _, d1, d2, d3 = extract_candlestick(candlestick)
 
@@ -192,7 +191,7 @@ def is_gravestone_doji(candlestick, long_upper_shadow=0.05):
     return False
 
 
-def is_hammer(candlestick, t1, t3, small_body=0.01):
+def is_hammer(candlestick, t1=10, t3=3, small_body=0.01):
     """
         A black or a white candlestick that consists of a small body near the high with a little or no upper shadow and
         a long lower tail. Considered a bullish pattern during a downtrend.
@@ -209,7 +208,7 @@ def is_hammer(candlestick, t1, t3, small_body=0.01):
     return False
 
 
-def is_inverted_hammer(candlestick, t1, t3, small_body=0.01):
+def is_inverted_hammer(candlestick, t1=3, t3=10, small_body=0.01):
     """
         A black or a white candlestick in an upside-down hammer position.
     """
@@ -220,6 +219,25 @@ def is_inverted_hammer(candlestick, t1, t3, small_body=0.01):
 
     if d1 > 0 and d2 > 0 and d3 > 0:
         if d1 / d2 > t1 and d2 / d3 > t3:
+            return True
+
+    return False
+
+
+def is_hanging_man(candlestick, t1=10, small_body=0.01):
+    """
+        A black or a white candlestick that consists of a small body near the high with a little or no
+        upper shadow and a long lower tail. The lower tail should be two or three times the height of the body.
+        Considered a bearish pattern during an uptrend.
+    """
+
+    y1, y2, _, _, d1, d2, d3 = extract_candlestick(candlestick)
+
+    if 2 * d2 / (y1 + y2) > small_body:
+        return False
+
+    if d1 >= 0 and d2 > 0 and d3 > 0:
+        if d2 / d1 > t1 and 2 <= d3 / d2 <= 3:
             return True
 
     return False
