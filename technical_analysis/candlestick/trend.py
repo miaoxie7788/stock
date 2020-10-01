@@ -43,6 +43,7 @@ def is_bullish_or_bearish_trend(candlesticks, key="close"):
     return "bearish"
 
 
+# TODO: is_market_bottom and is_market_top can be combined into one.
 def is_market_bottom(candlesticks, key="low"):
     """
         A couple of consecutive daily prices (by default low prices) present a bearish_trend.
@@ -77,3 +78,17 @@ def is_market_top(candlesticks, key="high"):
             return True
 
     return False
+
+
+def evaluate(eval_dict, window_size=3):
+    effective = 0
+    for date, candlesticks in eval_dict.items():
+        future_candlesticks = candlesticks.iloc[window_size:].to_dict(orient="records")
+
+        if is_bullish_or_bearish_trend(future_candlesticks) == "bullish":
+            effective += 1
+            print("It is effective on {date}".format(date=date))
+        else:
+            print("It is not effective on {date}".format(date=date))
+    if len(eval_dict) != 0:
+        print("The successful rate is: {rate}".format(rate=effective / len(eval_dict)))
