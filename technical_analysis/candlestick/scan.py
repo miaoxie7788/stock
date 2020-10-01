@@ -2,7 +2,8 @@
     Scan candlestick patterns.
 """
 
-from technical_analysis.candlestick.pattern import is_bullish_or_bearish_trend, is_dragonfly_doji_reversal
+from technical_analysis.candlestick.pattern import is_bullish_or_bearish_trend, is_dragonfly_doji_reversal, \
+    is_gravestone_doji_reversal
 
 
 def scan_dragonfly_doji_reversal(df, window_size=3, long_lower_shadow=0.02):
@@ -18,6 +19,39 @@ def scan_dragonfly_doji_reversal(df, window_size=3, long_lower_shadow=0.02):
     print("There are a total of {n} reversals.".format(n=n))
 
     return reversal_dict
+
+
+def scan_gravestone_doji_reversal(df, window_size=3, long_upper_shadow=0.02):
+    n = len(df)
+    reversal_dict = dict()
+    for x in range(window_size, n):
+        candlesticks = df.iloc[x - window_size:x].to_dict(orient="records")
+        present_candlestick = candlesticks[-1]
+        if is_gravestone_doji_reversal(candlesticks, long_upper_shadow=long_upper_shadow):
+            reversal_dict[present_candlestick["date"]] = df.iloc[x - window_size:x + window_size]
+
+    n = len(reversal_dict)
+    print("There are a total of {n} reversals.".format(n=n))
+
+    return reversal_dict
+
+
+def scan_hammer_reversal(df, window_size=5):
+    def parameterised_is_hammer(candlestick):
+        return is_hammer(candlestick, t1=4, t3=2, small_body=0.01)
+
+    df["is_hammer"] = df.apply(parameterised_is_hammer, axis="columns")
+    neighbour_prices_dict = dict()
+    for _, price in df[df.is_hammer].iterrows():
+        x = price.name
+        if x >= window_size:
+            hist_prices = df.iloc[x - window_size:x + 1].to_dict(orient="records")
+            if is_bullish_or_bearish_trend(hist_prices) == "bearish":
+                # print("A bullish trend reversal is signaled on {date}".format(date=price["date"]))
+                neighbour_prices_dict[price["date"]] = df.iloc[x - window_size:x + window_size]
+
+    n = len(neighbour_prices_dict)
+    print("There are a total of {n} reversals.".format(n=n))
 
 
 def evaluate(reversal_dict, window_size=3):
