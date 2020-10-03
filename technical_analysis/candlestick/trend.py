@@ -23,6 +23,8 @@ def is_bullish_or_bearish_candlestick(candlestick):
     return "bearish"
 
 
+# TODO it should create another function to determine downtrend/uptrend, which might be different from
+#  bullish/bearish trend.
 def is_bullish_or_bearish_trend(candlesticks, key="close"):
     """
         A couple of consecutive daily prices (by default close prices) are fitted with a 1st order linear model y = ax

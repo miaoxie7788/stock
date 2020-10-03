@@ -1,10 +1,8 @@
 """
-    Candlestick techniques
+    Candlestick techniques, patterns
 
     reference:
     https://en.wikipedia.org/wiki/Candlestick_pattern
-    https://www.ig.com/au/trading-strategies/16-candlestick-patterns-every-trader-should-know-180615
-    https://www.investopedia.com/articles/active-trading/092315/5-most-powerful-candlestick-patterns.asp
 """
 
 from technical_analysis.candlestick.trend import is_bullish_or_bearish_candlestick, extract_candlestick
@@ -51,14 +49,14 @@ def is_big_white_candle(candlestick, t1=5, t3=5, long_body=0.05):
     return False
 
 
-def is_black_body():
+def is_black_body(candlestick):
     """
         Formed when the opening price is higher than the closing price. Considered to be a bearish signal.
     """
     pass
 
 
-def is_white_body():
+def is_white_body(candlestick):
     """
         Formed when the closing price is higher than the opening price and considered a bullish signal.
     """
@@ -77,7 +75,7 @@ def is_doji(candlestick):
     return False
 
 
-def is_long_legged_doji(candlestick, long_upper_shadow, long_lower_shadow):
+def is_long_legged_doji(candlestick):
     """
         Consists of a Doji with very long upper and lower shadows. Indicates strong forces balanced in
         opposition.
@@ -163,5 +161,59 @@ def is_hanging_man(candlestick, t1=10, small_body=0.01):
             return True
 
     return False
+
+
+def is_shooting_star(candlestick):
+    """
+        A black or a white candlestick that has a small body, a long upper shadow and a little or no lower tail.
+        Considered a bearish pattern in an uptrend.
+    """
+    pass
+
+
+def is_long_upper_shadow(candlestick):
+    """
+        A black or a white candlestick with an upper shadow that has a length of 2/3 or more of the total range of
+        the candlestick. Normally considered a bearish signal when it appears around price resistance levels.
+    """
+    pass
+
+
+def is_long_lower_shadow(candlestick):
+    """
+        A black or a white candlestick is formed with a lower tail that has a length of 2/3 or more of the total
+        range of the candlestick. Normally considered a bullish signal when it appears around price support levels
+    """
+    pass
+
+
+def is_marubozu(candlestick):
+    """
+        A long or a normal candlestick (black or white) with no shadow or tail. The high and the lows represent the
+        opening and the closing prices. Considered a continuation pattern.
+    """
+    pass
+
+
+def is_spinning_top(candlestick):
+    """
+        A black or a white candlestick with a small body. The size of shadows can vary. Interpreted as a neutral
+        pattern but gains importance when it is part of other formations.
+    """
+    pass
+
+
+def is_shaven_head(candlestick):
+    """
+        A black or a white candlestick with no upper shadow. [Compared with hammer.]
+    """
+    pass
+
+
+def is_shaven_bottom(candlestick):
+    """
+        A black or a white candlestick with no lower tail. [Compare with Inverted Hammer.]
+    """
+    pass
 
 # Complex candlestick patterns.

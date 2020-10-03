@@ -2,7 +2,7 @@
     Scan candlestick patterns.
 """
 
-from technical_analysis.candlestick.signal import is_hammer_bullish_pattern, is_dragonfly_doji_reversal, \
+from technical_analysis.candlestick.signal import is_hammer_reversal, is_dragonfly_doji_reversal, \
     is_gravestone_doji_reversal
 
 
@@ -12,7 +12,7 @@ def scan_hammer_bullish_pattern(df, window_size=5, t1=4, t3=2, small_body=0.01):
     for x in range(window_size, n):
         candlesticks = df.iloc[x - window_size:x].to_dict(orient="records")
         present_candlestick = candlesticks[-1]
-        if is_hammer_bullish_pattern(candlesticks, t1, t3, small_body):
+        if is_hammer_reversal(candlesticks, t1, t3, small_body):
             eval_dict[present_candlestick["date"]] = df.iloc[x - window_size:x + window_size]
 
     print("There are a total of {n} bullish patterns.".format(n=len(eval_dict)))
