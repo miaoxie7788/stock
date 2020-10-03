@@ -23,9 +23,7 @@ def is_bullish_or_bearish_candlestick(candlestick):
     return "bearish"
 
 
-# TODO it should create another function to determine downtrend/uptrend, which might be different from
-#  bullish/bearish trend.
-def is_bullish_or_bearish_trend(candlesticks, key="close"):
+def is_bullish_or_bearish_trend(candlesticks, key="close", abs_slope=0):
     """
         A couple of consecutive daily prices (by default close prices) are fitted with a 1st order linear model y = ax
         + b. If a > 0, the trend is bullish otherwise bearish.
@@ -40,7 +38,7 @@ def is_bullish_or_bearish_trend(candlesticks, key="close"):
     y = np.array(prices)
 
     slope, _ = list(np.polyfit(x, y, 1))
-    if slope > 0:
+    if abs(slope) > abs_slope:
         return "bullish"
     return "bearish"
 
