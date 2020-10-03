@@ -6,7 +6,7 @@
     https://www.investopedia.com/articles/active-trading/092315/5-most-powerful-candlestick-patterns.asp
 """
 
-from technical_analysis.candlestick.pattern import is_hammer
+from technical_analysis.candlestick.pattern import is_hammer, is_inverted_hammer
 from technical_analysis.candlestick.trend import is_market_top_or_bottom
 
 
@@ -30,7 +30,7 @@ def is_hammer_signal(candlesticks, abs_slope, t1, t3, small_body):
     return False
 
 
-def is_inverted_hammer_signal():
+def is_inverted_hammer_signal(candlesticks, abs_slope, t1, t3, small_body):
     """
         A similarly bullish pattern is the inverted hammer. The only difference being that the upper wick is long,
         while the lower wick is short.
@@ -38,7 +38,13 @@ def is_inverted_hammer_signal():
         It indicates a buying pressure, followed by a selling pressure that was not strong enough to drive the market
         price down. The inverse hammer suggests that buyers will soon have control of the market.
     """
-    pass
+    present_candlestick = candlesticks[-1]
+
+    if is_market_top_or_bottom(candlesticks, "low", abs_slope) == "bottom" and \
+            is_inverted_hammer(present_candlestick, t1, t3, small_body):
+        return True
+
+    return False
 
 
 def is_bullish_engulfing_signal():

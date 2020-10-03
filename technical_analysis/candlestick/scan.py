@@ -2,16 +2,30 @@
     Scan candlestick patterns.
 """
 
-from technical_analysis.candlestick.signal import is_hammer_signal
+from technical_analysis.candlestick.signal import is_hammer_signal, is_inverted_hammer_signal
 
 
-def scan_hammer_bullish_pattern(df, window_size=5, abs_slope=0.5, t1=4, t3=2, small_body=0.01):
+def scan_hammer(df, window_size=5, abs_slope=0.5, t1=4, t3=2, small_body=0.01):
     n = len(df)
     eval_dict = dict()
     for x in range(window_size, n):
         candlesticks = df.iloc[x - window_size:x].to_dict(orient="records")
         present_candlestick = candlesticks[-1]
         if is_hammer_signal(candlesticks, abs_slope, t1, t3, small_body):
+            eval_dict[present_candlestick["date"]] = df.iloc[x - window_size:x + window_size]
+
+    print("There are a total of {n} bullish patterns.".format(n=len(eval_dict)))
+
+    return eval_dict
+
+
+def scan_inverted_hammer(df, window_size=5, abs_slope=0.5, t1=2, t3=4, small_body=0.01):
+    n = len(df)
+    eval_dict = dict()
+    for x in range(window_size, n):
+        candlesticks = df.iloc[x - window_size:x].to_dict(orient="records")
+        present_candlestick = candlesticks[-1]
+        if is_inverted_hammer_signal(candlesticks, abs_slope, t1, t3, small_body):
             eval_dict[present_candlestick["date"]] = df.iloc[x - window_size:x + window_size]
 
     print("There are a total of {n} bullish patterns.".format(n=len(eval_dict)))

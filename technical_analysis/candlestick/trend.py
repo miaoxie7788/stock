@@ -72,12 +72,20 @@ def is_market_top_or_bottom(candlesticks, key="low", abs_slope=0):
 def evaluate(eval_dict, window_size=3):
     effective = 0
     for date, candlesticks in eval_dict.items():
-        future_candlesticks = candlesticks.iloc[window_size:].to_dict(orient="records")
 
-        if is_bullish_or_bearish_trend(future_candlesticks) == "bullish":
+        candlesticks = candlesticks.iloc[window_size - 1:].to_dict(orient="records")
+        present_candlestick = candlesticks[0]
+        future_candlesticks = candlesticks[1:]
+
+        present_price = present_candlestick["close"]
+        future_prices = [candlestick["close"] for candlestick in future_candlesticks if
+                         not np.isnan(candlestick["close"])]
+
+        if any(future_price > present_price for future_price in future_prices):
             effective += 1
             print("It is effective on {date}".format(date=date))
         else:
             print("It is not effective on {date}".format(date=date))
+
     if len(eval_dict) != 0:
         print("The successful rate is: {rate}".format(rate=effective / len(eval_dict)))
