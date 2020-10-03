@@ -43,7 +43,7 @@ def is_bullish_or_bearish_trend(candlesticks, key="close", abs_slope=0):
     return "bearish"
 
 
-def is_market_bottom(candlesticks, key="low", abs_slope=0):
+def is_market_top_or_bottom(candlesticks, key="low", abs_slope=0):
     """
         A couple of consecutive daily prices (by default low prices) present a bullish/bearish_trend.
         If the latest daily price is maximal/minimal, it is a market top/bottom; otherwise None.

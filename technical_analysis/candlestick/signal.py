@@ -7,11 +7,11 @@
 """
 
 from technical_analysis.candlestick.pattern import is_hammer
-from technical_analysis.candlestick.trend import is_market_bottom
+from technical_analysis.candlestick.trend import is_market_top_or_bottom
 
 
 # bullish
-def is_hammer_reversal(candlesticks, t1, t3, small_body):
+def is_hammer_reversal(candlesticks, abs_slope, t1, t3, small_body):
     """
          The hammer candlestick pattern is formed of a short body with a long lower wick, and is found at the bottom
          of a downward trend.
@@ -23,7 +23,7 @@ def is_hammer_reversal(candlesticks, t1, t3, small_body):
 
     present_candlestick = candlesticks[-1]
 
-    if is_market_bottom(candlesticks) and is_hammer(present_candlestick, t1, t3, small_body):
+    if is_market_top_or_bottom(candlesticks, "low", abs_slope) and is_hammer(present_candlestick, t1, t3, small_body):
         return True
 
     return False
