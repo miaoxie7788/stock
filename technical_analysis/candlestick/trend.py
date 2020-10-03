@@ -43,41 +43,26 @@ def is_bullish_or_bearish_trend(candlesticks, key="close", abs_slope=0):
     return "bearish"
 
 
-# TODO: is_market_bottom and is_market_top can be combined into one.
-def is_market_bottom(candlesticks, key="low"):
+def is_market_bottom(candlesticks, key="low", abs_slope=0):
     """
-        A couple of consecutive daily prices (by default low prices) present a bearish_trend.
-        If the latest daily price is minimal, it is a market bottom; otherwise not.
-    """
-    present_candlestick = candlesticks[-1]
-    history_candlesticks = candlesticks[:-1]
-
-    if is_bullish_or_bearish_trend(history_candlesticks) == "bearish":
-        present_price = present_candlestick[key]
-        history_prices = [candlestick[key] for candlestick in history_candlesticks if not np.isnan(candlestick[key])]
-
-        if present_price <= min(history_prices):
-            return True
-
-    return False
-
-
-def is_market_top(candlesticks, key="high"):
-    """
-        A couple of consecutive daily prices (by default high prices) present a bullish_trend.
-        If the latest daily price is maximal, it is a market top; otherwise not.
+        A couple of consecutive daily prices (by default low prices) present a bullish/bearish_trend.
+        If the latest daily price is maximal/minimal, it is a market top/bottom; otherwise None.
     """
     present_candlestick = candlesticks[-1]
     history_candlesticks = candlesticks[:-1]
 
-    if is_bullish_or_bearish_trend(history_candlesticks) == "bullish":
-        present_price = present_candlestick[key]
-        history_prices = [candlestick[key] for candlestick in history_candlesticks if not np.isnan(candlestick[key])]
+    present_price = present_candlestick[key]
+    history_prices = [candlestick[key] for candlestick in history_candlesticks if not np.isnan(candlestick[key])]
 
-        if present_price >= max(history_prices):
-            return True
+    if is_bullish_or_bearish_trend(history_candlesticks, "close", abs_slope) == "bullish" \
+            and present_price >= max(history_prices):
+        return "top"
 
-    return False
+    if is_bullish_or_bearish_trend(history_candlesticks, "close", abs_slope) == "bearish" \
+            and present_price <= min(history_prices):
+        return "bottom"
+
+    return None
 
 
 def evaluate(eval_dict, window_size=3):
