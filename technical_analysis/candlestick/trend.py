@@ -38,9 +38,13 @@ def is_bullish_or_bearish_trend(candlesticks, key="close", abs_slope=0):
     y = np.array(prices)
 
     slope, _ = list(np.polyfit(x, y, 1))
-    if abs(slope) > abs_slope:
+    if slope > abs_slope:
         return "bullish"
-    return "bearish"
+
+    if slope < 0 and abs(slope) > abs_slope:
+        return "bearish"
+
+    return None
 
 
 def is_market_top_or_bottom(candlesticks, key="low", abs_slope=0):
