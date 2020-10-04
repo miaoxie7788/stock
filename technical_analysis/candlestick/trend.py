@@ -103,4 +103,10 @@ def evaluate(eval_dict, key="close", print_detail=True):
                     print("It fails on {date}".format(date=date))
 
     if len(eval_dict) != 0:
-        print("The successful rate is: {rate}".format(rate=success / len(eval_dict)))
+        success_rate = success / len(eval_dict)
+        if print_detail:
+            print("The successful rate is: {rate}".format(rate=success_rate))
+    else:
+        success_rate = 0
+
+    return success_rate
