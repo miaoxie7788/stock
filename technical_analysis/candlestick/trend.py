@@ -69,7 +69,7 @@ def is_market_top_or_bottom(candlesticks, key="low", abs_slope=0):
     return None
 
 
-def evaluate(eval_dict, key="close"):
+def evaluate(eval_dict, key="close", print_detail=True):
     """"
         Each item in eval_dict is ('date', neighbouring_candlesticks).
 
@@ -96,9 +96,11 @@ def evaluate(eval_dict, key="close"):
 
             if any(future_price > present_price for future_price in future_prices):
                 success += 1
-                print("It succeeds on {date}".format(date=date))
+                if print_detail:
+                    print("It succeeds on {date}".format(date=date))
             else:
-                print("It fails on {date}".format(date=date))
+                if print_detail:
+                    print("It fails on {date}".format(date=date))
 
     if len(eval_dict) != 0:
         print("The successful rate is: {rate}".format(rate=success / len(eval_dict)))
