@@ -111,7 +111,7 @@ def is_gravestone_doji(candlestick, long_upper_shadow=0.05):
     return False
 
 
-def is_hammer(candlestick, t1=10, t3=3, small_body=0.01):
+def is_hammer(candlestick, t1=10, t3=3, small_body=0.05):
     """
         A black or a white candlestick that consists of a small body near the high with a little or no upper shadow and
         a long lower tail. Considered a bullish pattern during a downtrend.
@@ -128,7 +128,7 @@ def is_hammer(candlestick, t1=10, t3=3, small_body=0.01):
     return False
 
 
-def is_inverted_hammer(candlestick, t1=3, t3=10, small_body=0.01):
+def is_inverted_hammer(candlestick, t1=3, t3=10, small_body=0.05):
     """
         A black or a white candlestick in an upside-down hammer position.
     """
