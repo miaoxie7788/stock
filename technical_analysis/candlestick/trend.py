@@ -69,23 +69,36 @@ def is_market_top_or_bottom(candlesticks, key="low", abs_slope=0):
     return None
 
 
-def evaluate(eval_dict, window_size=3):
-    effective = 0
+def evaluate(eval_dict, key="close"):
+    """"
+        Each item in eval_dict is ('date', neighbouring_candlesticks).
+
+        E.g., windows_size = 3,
+        c-3, c-2, c-1, c0, c1, c2
+
+        It evaluates if there is any price of [c1, c2] (by default close price) higher than price of c0. If yes,
+        it indicates "success"; otherwise "failure".
+    """
+    success = 0
     for date, candlesticks in eval_dict.items():
 
-        candlesticks = candlesticks.iloc[window_size - 1:].to_dict(orient="records")
-        present_candlestick = candlesticks[0]
-        future_candlesticks = candlesticks[1:]
+        # Convert df to list of candlesticks.
+        candlesticks = candlesticks.to_dict(orient="records")
+        # Compute window_size.
+        window_size = int(len(candlesticks) / 2)
 
-        present_price = present_candlestick["close"]
-        future_prices = [candlestick["close"] for candlestick in future_candlesticks if
-                         not np.isnan(candlestick["close"])]
+        if candlesticks:
+            present_candlestick = candlesticks[window_size]
+            future_candlesticks = candlesticks[window_size + 1:]
 
-        if any(future_price > present_price for future_price in future_prices):
-            effective += 1
-            print("It is effective on {date}".format(date=date))
-        else:
-            print("It is not effective on {date}".format(date=date))
+            present_price = present_candlestick[key]
+            future_prices = [candlestick[key] for candlestick in future_candlesticks if not np.isnan(candlestick[key])]
+
+            if any(future_price > present_price for future_price in future_prices):
+                success += 1
+                print("It succeeds on {date}".format(date=date))
+            else:
+                print("It fails on {date}".format(date=date))
 
     if len(eval_dict) != 0:
-        print("The successful rate is: {rate}".format(rate=effective / len(eval_dict)))
+        print("The successful rate is: {rate}".format(rate=success / len(eval_dict)))
