@@ -11,7 +11,7 @@ from candlestick.core.trend import is_market_top_or_bottom
 
 
 # bullish
-def is_hammer_signal(candlesticks, abs_slope, t1, t3, small_body):
+def is_hammer_signal(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body):
     """
          The hammer candlestick pattern is formed of a short body with a long lower wick, and is found at the bottom
          of a downward trend.
@@ -21,16 +21,14 @@ def is_hammer_signal(candlesticks, abs_slope, t1, t3, small_body):
          bull market than red hammers.
     """
 
-    present_candlestick = candlesticks[-1]
-
-    if is_market_top_or_bottom(candlesticks, "low", abs_slope) == "bottom" and \
-            is_hammer(present_candlestick, t1, t3, small_body):
+    if is_market_top_or_bottom(cur_candlestick, his_candlesticks, "low", abs_slope) == "bottom" and \
+            is_hammer(cur_candlestick, t1, t3, small_body):
         return True
 
     return False
 
 
-def is_inverted_hammer_signal(candlesticks, abs_slope, t1, t3, small_body):
+def is_inverted_hammer_signal(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body):
     """
         A similarly bullish pattern is the inverted hammer. The only difference being that the upper wick is long,
         while the lower wick is short.
@@ -38,10 +36,9 @@ def is_inverted_hammer_signal(candlesticks, abs_slope, t1, t3, small_body):
         It indicates a buying pressure, followed by a selling pressure that was not strong enough to drive the market
         price down. The inverse hammer suggests that buyers will soon have control of the market.
     """
-    present_candlestick = candlesticks[-1]
 
-    if is_market_top_or_bottom(candlesticks, "low", abs_slope) == "bottom" and \
-            is_inverted_hammer(present_candlestick, t1, t3, small_body):
+    if is_market_top_or_bottom(cur_candlestick, his_candlesticks, "low", abs_slope) == "bottom" and \
+            is_inverted_hammer(cur_candlestick, t1, t3, small_body):
         return True
 
     return False

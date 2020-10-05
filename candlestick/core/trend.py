@@ -30,23 +30,21 @@ def is_bullish_or_bearish_trend(candlesticks, key="close", abs_slope=0):
     return None
 
 
-def is_market_top_or_bottom(candlesticks, key="low", abs_slope=0):
+def is_market_top_or_bottom(cur_candlestick, his_candlesticks, key="low", abs_slope=0):
     """
         A couple of consecutive daily prices (by default low prices) present a bullish/bearish_trend.
         If the latest daily price is maximal/minimal, it is a market top/bottom; otherwise None.
     """
-    present_candlestick = candlesticks[-1]
-    history_candlesticks = candlesticks[:-1]
 
-    present_price = present_candlestick[key]
-    history_prices = [candlestick[key] for candlestick in history_candlesticks if not np.isnan(candlestick[key])]
+    cur_price = cur_candlestick[key]
+    his_prices = [candlestick[key] for candlestick in his_candlesticks if not np.isnan(candlestick[key])]
 
-    if is_bullish_or_bearish_trend(history_candlesticks, "close", abs_slope) == "bullish" \
-            and present_price >= max(history_prices):
+    if is_bullish_or_bearish_trend(his_candlesticks, "close", abs_slope) == "bullish" \
+            and cur_price >= max(his_prices):
         return "top"
 
-    if is_bullish_or_bearish_trend(history_candlesticks, "close", abs_slope) == "bearish" \
-            and present_price <= min(history_prices):
+    if is_bullish_or_bearish_trend(his_candlesticks, "close", abs_slope) == "bearish" \
+            and cur_price <= min(his_prices):
         return "bottom"
 
     return None
