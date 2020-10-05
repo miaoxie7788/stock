@@ -44,20 +44,29 @@ def get_stock_historical_data(stock_code, start_date=None, end_date=None, path="
                 df.to_csv(filename, header=True, index=False)
                 print("Historical {data_type} data are downloaded for {stock_code} between {start_date} and {end_date}".
                       format(stock_code=stock_code, data_type=data_type, start_date=start_date, end_date=end_date))
+
         except KeyError:
+            print("Historical {data_type} data are not available for {stock_code} between the given dates".
+                  format(stock_code=stock_code, data_type=data_type))
+
+        except AssertionError:
             print("Historical {data_type} data are not available for {stock_code}.".
                   format(stock_code=stock_code, data_type=data_type))
 
 
 if __name__ == "__main__":
     # Get asx stock historical data.
-    # asx_stock_watchlist = ["tls.ax", "wbc.ax", "nov.ax", "cba.ax", "hack.ax", "ltr.ax"]
+    asx_stocks = ["abp.ax", "apt.ax", "boq.ax", "bpt.ax", "ctx.ax", "car.ax", "csl.ax", "dhg.ax", "dmp.ax", "fph.ax",
+                  "gem.ax", "hvn.ax", "ire.ax", "jbh.ax", "mgr.ax", "mpl.ax", "tls.ax", "wbc.ax", "orh.ax", "cba.ax", ]
+
+    for stock in asx_stocks:
+        get_stock_historical_data(stock, path="data/asx_stock/csv")
 
     # Get SZ stock historical data.
 
-    sz_stocks = ["300655.SZ", "300122.SZ", "002007.SZ", "300185.SZ", "002594.SZ", "002625.SZ",
-                 "000625.SZ", "300750.SZ", "000333.SZ", "002475.SZ", "000725.SZ", "300730.SZ", "002230.SZ",
-                 "000002.SZ", "002285.SZ", "000656.SZ", "000011.SZ", "000069.SZ", "000006.SZ", "300369.SZ"]
-
-    for stock in sz_stocks:
-        get_stock_historical_data(stock, path="data/sz_stock/csv")
+    # sz_stocks = ["300655.SZ", "300122.SZ", "002007.SZ", "300185.SZ", "002594.SZ", "002625.SZ",
+    #              "000625.SZ", "300750.SZ", "000333.SZ", "002475.SZ", "000725.SZ", "300730.SZ", "002230.SZ",
+    #              "000002.SZ", "002285.SZ", "000656.SZ", "000011.SZ", "000069.SZ", "000006.SZ", "300369.SZ"]
+    #
+    # for stock in sz_stocks:
+    #     get_stock_historical_data(stock, path="data/sz_stock/csv")
