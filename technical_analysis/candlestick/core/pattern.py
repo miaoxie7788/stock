@@ -5,7 +5,23 @@
     https://en.wikipedia.org/wiki/Candlestick_pattern
 """
 
-from technical_analysis.candlestick.trend import is_bullish_or_bearish_candlestick, extract_candlestick
+from technical_analysis.candlestick.core.trend import is_bullish_or_bearish_candlestick
+
+
+def extract_candlestick(candlestick):
+    """
+        Extract prices and price differences from a bullish or bearish candlestick.
+
+        candlestick = {"open": y1, "close": y2, "high": y3, "low": y4}
+    """
+    y1, y2, y3, y4 = candlestick['open'], candlestick['close'], candlestick['high'], candlestick['low']
+
+    if is_bullish_or_bearish_candlestick(candlestick) == "bullish":
+        d1, d2, d3 = y3 - y2, y2 - y1, y1 - y4
+    else:
+        d1, d2, d3 = y3 - y1, y1 - y2, y2 - y4
+
+    return y1, y2, y3, y4, d1, d2, d3
 
 
 # Simple candlestick patterns.
