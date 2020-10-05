@@ -2,7 +2,7 @@
     Scan candlestick patterns.
 """
 
-from technical_analysis.candlestick.core.signal import is_hammer_signal, is_inverted_hammer_signal
+from candlestick.core.signal import is_hammer_signal, is_inverted_hammer_signal
 
 
 def scan_benchmark(df, window_size):

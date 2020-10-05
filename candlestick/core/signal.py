@@ -6,8 +6,8 @@
     https://www.investopedia.com/articles/active-trading/092315/5-most-powerful-candlestick-patterns.asp
 """
 
-from technical_analysis.candlestick.core.pattern import is_hammer, is_inverted_hammer
-from technical_analysis.candlestick.core.trend import is_market_top_or_bottom
+from candlestick import is_hammer, is_inverted_hammer
+from candlestick import is_market_top_or_bottom
 
 
 # bullish

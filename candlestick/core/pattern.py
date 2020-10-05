@@ -5,7 +5,7 @@
     https://en.wikipedia.org/wiki/Candlestick_pattern
 """
 
-from technical_analysis.candlestick.core.trend import is_bullish_or_bearish_candlestick
+from candlestick import is_bullish_or_bearish_candlestick
 
 
 def extract_candlestick(candlestick):

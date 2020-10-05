@@ -1,3 +1,8 @@
+"""
+    Candlestick techniques, trends
+
+"""
+
 import numpy as np
 
 
@@ -51,4 +56,3 @@ def is_market_top_or_bottom(candlesticks, key="low", abs_slope=0):
         return "bottom"
 
     return None
-
