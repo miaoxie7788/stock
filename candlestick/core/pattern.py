@@ -5,8 +5,6 @@
     https://en.wikipedia.org/wiki/Candlestick_pattern
 """
 
-from candlestick import is_bullish_or_bearish_candlestick
-
 
 def extract_candlestick(candlestick):
     """
@@ -22,6 +20,12 @@ def extract_candlestick(candlestick):
         d1, d2, d3 = y3 - y1, y1 - y2, y2 - y4
 
     return y1, y2, y3, y4, d1, d2, d3
+
+
+def is_bullish_or_bearish_candlestick(candlestick):
+    if candlestick["close"] >= candlestick["open"]:
+        return "bullish"
+    return "bearish"
 
 
 # Simple candlestick patterns.

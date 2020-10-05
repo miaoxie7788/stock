@@ -6,12 +6,6 @@
 import numpy as np
 
 
-def is_bullish_or_bearish_candlestick(candlestick):
-    if candlestick["close"] >= candlestick["open"]:
-        return "bullish"
-    return "bearish"
-
-
 def is_bullish_or_bearish_trend(candlesticks, key="close", abs_slope=0):
     """
         A couple of consecutive daily prices (by default close prices) are fitted with a 1st order linear model y = ax
