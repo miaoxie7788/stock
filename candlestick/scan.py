@@ -19,7 +19,7 @@ def scan_hammer(df, his_size, fut_size, abs_slope, t1, t3, small_body):
             signal = False
 
         window = {"date": cur_candlestick["date"], "cur": cur_candlestick, "his": his_candlesticks,
-                  "fut": fut_candlesticks, "signal": signal}
+                  "fut": fut_candlesticks, "is_hammer_signal": signal}
 
         windows.append(window)
 
