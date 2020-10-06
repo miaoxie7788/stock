@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 
 
@@ -13,44 +14,39 @@ def plot_candlestick(price_df):
     fig.show()
 
 
-def evaluate(eval_dict, key="close", print_detail=True):
-    """"
-        Each item in eval_dict is ('date', neighbouring_candlesticks).
+def debug(window_df):
+    while True:
+        date = input("Type the date to plot its neighbouring candlesticks: \n")
+        window = window_df.loc[window_df["date"] == date]
 
-        E.g., windows_size = 3,
+        candlesticks = [*window['his'].values[0], window['cur'].values[0], *window['fut'].values[0]]
+        plot_candlestick(pd.DataFrame(candlesticks))
+
+
+def evaluate_any_higher_price(windows, key="close"):
+    """"
+        Each window is a dict of date, his_candlesticks, cur_candlestick, fut_candlesticks.
+
+        E.g., his_size = 3, fut_size = 2, cur_candlestick = c0
         c-3, c-2, c-1, c0, c1, c2
 
         It evaluates if there is any price of [c1, c2] (by default close price) higher than price of c0. If yes,
         it indicates "success"; otherwise "failure".
     """
-    success = 0
-    for date, candlesticks in eval_dict.items():
 
-        # Convert df to list of candlesticks.
-        candlesticks = candlesticks.to_dict(orient="records")
-        # Compute window_size.
-        window_size = int(len(candlesticks) / 2)
+    def any_higher_price(row):
+        fut_prices = [candlestick[key] for candlestick in row["fut"] if not np.isnan(candlestick[key])]
+        cut_price = row["cur"][key]
+        if any(fut_price > cut_price for fut_price in fut_prices):
+            return True
+        else:
+            return False
 
-        if candlesticks:
-            present_candlestick = candlesticks[window_size]
-            future_candlesticks = candlesticks[window_size + 1:]
+    windows_df = pd.DataFrame(windows)
+    windows_df["higher_fut_price"] = windows_df.apply(any_higher_price, axis="columns")
 
-            present_price = present_candlestick[key]
-            future_prices = [candlestick[key] for candlestick in future_candlesticks if not np.isnan(candlestick[key])]
+    return windows_df
 
-            if any(future_price > present_price for future_price in future_prices):
-                success += 1
-                if print_detail:
-                    print("It succeeds on {date}".format(date=date))
-            else:
-                if print_detail:
-                    print("It fails on {date}".format(date=date))
 
-    if len(eval_dict) != 0:
-        success_rate = success / len(eval_dict)
-        if print_detail:
-            print("The successful rate is: {rate}".format(rate=success_rate))
-    else:
-        success_rate = 0
-
-    return success_rate
+def evaluate_bullish_trend(windows, key="close", print_detail=True):
+    pass
