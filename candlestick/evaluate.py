@@ -3,13 +3,13 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-def plot_candlestick(price_df):
+def plot_candlestick(candlestick_df):
     fig = go.Figure(data=[go.Candlestick(
-        x=price_df['date'],
-        open=price_df['open'],
-        high=price_df['high'],
-        low=price_df['low'],
-        close=price_df['close'])])
+        x=candlestick_df['date'],
+        open=candlestick_df['open'],
+        high=candlestick_df['high'],
+        low=candlestick_df['low'],
+        close=candlestick_df['close'])])
 
     fig.show()
 
