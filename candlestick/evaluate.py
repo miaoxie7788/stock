@@ -35,7 +35,11 @@ def evaluate_any_higher_price(windows, key="close"):
     """
 
     def any_higher_price(row):
-        max_fut_price = max([candlestick[key] for candlestick in row["fut"] if not np.isnan(candlestick[key])])
+        fut_prices = [candlestick[key] for candlestick in row["fut"] if not np.isnan(candlestick[key])]
+        if fut_prices:
+            max_fut_price = max(fut_prices)
+        else:
+            max_fut_price = 0
         cut_price = row["cur"][key]
 
         return round(max_fut_price / cut_price - 1, 3)
