@@ -35,12 +35,10 @@ def evaluate_any_higher_price(windows, key="close"):
     """
 
     def any_higher_price(row):
-        fut_prices = [candlestick[key] for candlestick in row["fut"] if not np.isnan(candlestick[key])]
+        max_fut_price = max([candlestick[key] for candlestick in row["fut"] if not np.isnan(candlestick[key])])
         cut_price = row["cur"][key]
-        if any(fut_price > cut_price for fut_price in fut_prices):
-            return True
-        else:
-            return False
+
+        return round(max_fut_price / cut_price - 1, 3)
 
     windows_df = pd.DataFrame(windows)
     windows_df["higher_fut_price"] = windows_df.apply(any_higher_price, axis="columns")
