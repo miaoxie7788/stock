@@ -10,6 +10,9 @@ with open("data/hs_stock_codes", "w") as f2:
         mkt = stock_code[:2]
         code = stock_code[2:]
 
+        if mkt == "sh":
+            mkt = "ss"
+
         yahoo_stock_code = "{code}.{mkt}".format(code=code, mkt=mkt)
         f2.write(yahoo_stock_code)
         f2.write("\n")
