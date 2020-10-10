@@ -1,9 +1,9 @@
 import re
 
-with open("hs_1_800", "r", encoding="utf8") as f1:
+with open("data/hs_1_800", "r", encoding="utf8") as f1:
     lines = f1.readlines()
 
-with open("hs_stock_codes", "w+") as f2:
+with open("data/hs_stock_codes", "w") as f2:
     for line in lines:
         stock_code = re.search(r"\w{2}\d{6}", line).group()
 
