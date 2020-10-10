@@ -56,11 +56,11 @@ def get_stock_historical_data(stock_code, start_date=None, end_date=None, path="
 
 if __name__ == "__main__":
     # Get asx stock historical data.
-    asx_stocks = ["abp.ax", "apt.ax", "boq.ax", "bpt.ax", "ctx.ax", "car.ax", "csl.ax", "dhg.ax", "dmp.ax", "fph.ax",
-                  "gem.ax", "hvn.ax", "ire.ax", "jbh.ax", "mgr.ax", "mpl.ax", "tls.ax", "wbc.ax", "orh.ax", "cba.ax", ]
-
-    for stock in asx_stocks:
-        get_stock_historical_data(stock, path="data/asx_stock/csv")
+    # asx_stocks = ["abp.ax", "apt.ax", "boq.ax", "bpt.ax", "ctx.ax", "car.ax", "csl.ax", "dhg.ax", "dmp.ax", "fph.ax",
+    #               "gem.ax", "hvn.ax", "ire.ax", "jbh.ax", "mgr.ax", "mpl.ax", "tls.ax", "wbc.ax", "orh.ax", "cba.ax", ]
+    #
+    # for stock in asx_stocks:
+    #     get_stock_historical_data(stock, path="data/asx_stock/csv")
 
     # Get SZ stock historical data.
 
@@ -70,3 +70,10 @@ if __name__ == "__main__":
     #
     # for stock in sz_stocks:
     #     get_stock_historical_data(stock, path="data/sz_stock/csv")
+
+    # Get HS stock historical data.
+    with open("data/hs_stock_codes") as f:
+        hs_stocks = [stock.strip() for stock in f.readlines()]
+
+    for stock in hs_stocks:
+        get_stock_historical_data(stock, path="data/hs_stock/csv")
