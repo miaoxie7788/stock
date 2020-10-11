@@ -23,7 +23,7 @@ def debug(window_df):
         plot_candlestick(pd.DataFrame(candlesticks))
 
 
-def evaluate_any_higher_price(windows, key="close"):
+def evaluate_any_higher_price(windows, key="close", a_share=False):
     """"
         Each window is a dict of date, his_candlesticks, cur_candlestick, fut_candlesticks.
 
@@ -35,12 +35,21 @@ def evaluate_any_higher_price(windows, key="close"):
     """
 
     def any_higher_price(row):
-        fut_prices = [candlestick[key] for candlestick in row["fut"] if not np.isnan(candlestick[key])]
+
+        # HS stock is T+1.
+        if a_share:
+            fut_candlesticks = row["fut"][1:]
+            cut_price = row["cur"][key]
+        # ASX stock is T+0.
+        else:
+            fut_candlesticks = row["fut"]
+            cut_price = row["cur"][key]
+
+        fut_prices = [candlestick[key] for candlestick in fut_candlesticks if not np.isnan(candlestick[key])]
         if fut_prices:
             max_fut_price = max(fut_prices)
         else:
             max_fut_price = 0
-        cut_price = row["cur"][key]
 
         return round(max_fut_price / cut_price - 1, 3)
 
