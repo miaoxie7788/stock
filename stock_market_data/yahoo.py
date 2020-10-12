@@ -62,7 +62,7 @@ if __name__ == "__main__":
     #     get_stock_historical_data(stock, path="data/asx_stock/csv")
 
     # Get HS stock historical data.
-    with open("data/hs_stock_codes_1_800") as f:
+    with open("data/hs_stock_codes_801_1600") as f:
         hs_stocks = [stock.strip() for stock in f.readlines()]
 
     for stock in hs_stocks:
