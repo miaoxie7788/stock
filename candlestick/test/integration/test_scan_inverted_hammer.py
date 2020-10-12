@@ -3,14 +3,13 @@ import re
 
 import pandas as pd
 
-from candlestick.evaluate import evaluate_any_higher_price, debug
-from candlestick.scan import scan_inverted_hammer
+from candlestick.evaluate import evaluate_any_higher_price, scan_inverted_hammer
 
 pd.set_option('display.max_columns', None)
 
 
 def test_stock(stock_code, stock_params, path="data/asx_stock/csv"):
-    print("Testing {stock_code}".format(stock_code=stock_code))
+    # print("Testing {stock_code}".format(stock_code=stock_code))
     stock_path = os.path.join(path, stock_code)
     filenames = os.listdir(stock_path)
     stock_price_filename = os.path.join(stock_path,
@@ -21,7 +20,7 @@ def test_stock(stock_code, stock_params, path="data/asx_stock/csv"):
 
     windows = scan_inverted_hammer(stock_df, **stock_params)
 
-    windows_df = evaluate_any_higher_price(windows, key="close")
+    windows_df = evaluate_any_higher_price(windows, key="open")
     windows_df0 = windows_df.loc[windows_df["is_inverted_hammer_signal"]]
 
     n = len(windows_df)
@@ -44,36 +43,17 @@ def test_stock(stock_code, stock_params, path="data/asx_stock/csv"):
         "benchmark_success_rate": round(rate, 3),
         "success_rate": round(rate0, 3),
         "improvement": round(rate0 / rate - 1, 3),
-        "method": "any_higher_close_price",
+        "method": "any_higher_open_price",
         **params_dict
     }
 
     print(result)
-    print(windows_df0[["date", "higher_fut_price"]])
-    debug(windows_df0)
+    # print(windows_df0[["date", "higher_fut_price"]])
+    # debug(windows_df0)
     return result
 
 
 if __name__ == "__main__":
-    params_dict = {
-        "his_size": 5,
-        "fut_size": 3,
-        "abs_slope": 0.01,
-        "t1": 2,
-        "t3": 1,
-        "small_body": 0.1,
-        "enhanced": False,
-    }
-
-    sz_stocks = ["300655.SZ", "300122.SZ", "002007.SZ", "300185.SZ", "002594.SZ", "002625.SZ",
-                 "000625.SZ", "300750.SZ", "000333.SZ", "002475.SZ", "000725.SZ", "300730.SZ", "002230.SZ",
-                 "000002.SZ", "002285.SZ", "000656.SZ", "000011.SZ", "000069.SZ", "000006.SZ", "300369.SZ"]
-
-    # sz_stocks = ["002007.SZ"]
-
-    result_df = pd.DataFrame([test_stock(stock, params_dict, "data/sz_stock/csv") for stock in sz_stocks])
-    # result_df.to_csv("sz_scan_inverted_hammer_results5.csv", index=False, header=True)
-
     # asx_stocks = ["abp.ax", "apt.ax", "boq.ax", "bpt.ax", "ctx.ax", "car.ax", "csl.ax", "dhg.ax", "dmp.ax", "fph.ax",
     #               "gem.ax", "hvn.ax", "ire.ax", "jbh.ax", "mgr.ax", "mpl.ax", "tls.ax", "wbc.ax", "orh.ax", "cba.ax", ]
     #
@@ -91,3 +71,18 @@ if __name__ == "__main__":
     #
     # result_df = pd.DataFrame([test_stock(stock, params_dict, "data/asx_stock/csv") for stock in asx_stocks])
     # result_df.to_csv("asx_scan_inverted_hammer_results5.csv", index=False, header=True)
+
+    with open("data/hs_stock_codes_1_800") as f:
+        hs_stocks = [stock.strip() for stock in f.readlines()]
+
+    params_dict = {
+        "his_size": 5,
+        "fut_size": 3,
+        "abs_slope": 0.01,
+        "t1": 2,
+        "t3": 1,
+        "small_body": 0.1,
+        "enhanced": True,
+    }
+    result_df = pd.DataFrame([test_stock(stock, params_dict, "data/hs_stock/csv") for stock in hs_stocks])
+    result_df.to_csv("hs_scan_inverted_hammer_results3.csv", index=False, header=True)

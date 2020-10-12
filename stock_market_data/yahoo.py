@@ -22,7 +22,6 @@ def get_stock_historical_data(stock_code, start_date=None, end_date=None, path="
         "dividend": get_dividends,
         "splits": get_splits
     }
-
     for data_type in stock_info_func_dict:
         try:
             df = stock_info_func_dict[data_type](ticker=stock_code,
