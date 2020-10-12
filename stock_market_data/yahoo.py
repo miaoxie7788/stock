@@ -61,15 +61,6 @@ if __name__ == "__main__":
     # for stock in asx_stocks:
     #     get_stock_historical_data(stock, path="data/asx_stock/csv")
 
-    # Get SZ stock historical data.
-
-    # sz_stocks = ["300655.SZ", "300122.SZ", "002007.SZ", "300185.SZ", "002594.SZ", "002625.SZ",
-    #              "000625.SZ", "300750.SZ", "000333.SZ", "002475.SZ", "000725.SZ", "300730.SZ", "002230.SZ",
-    #              "000002.SZ", "002285.SZ", "000656.SZ", "000011.SZ", "000069.SZ", "000006.SZ", "300369.SZ"]
-    #
-    # for stock in sz_stocks:
-    #     get_stock_historical_data(stock, path="data/sz_stock/csv")
-
     # Get HS stock historical data.
     with open("data/hs_stock_codes_1_800") as f:
         hs_stocks = [stock.strip() for stock in f.readlines()]
