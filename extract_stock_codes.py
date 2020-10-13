@@ -24,10 +24,15 @@ def extract_hs_stock_codes():
 
 def extract_asx_stock_codes():
     df = pd.read_csv("data/asx_listed_companies.csv")
-
     df["ASX code"].apply(lambda x: x.lower() + ".ax").to_csv("data/asx_stock_codes", header=False, index=False)
+
+
+def extract_asx_200_stock_codes():
+    df = pd.read_csv("data/asx_200_listed_companies.csv", skiprows=[0])
+    df["Code"].apply(lambda x: x.lower() + ".ax").to_csv("data/asx_200_stock_codes", header=False, index=False)
 
 
 if __name__ == "__main__":
     # extract_hs_stock_codes()
     extract_asx_stock_codes()
+    extract_asx_200_stock_codes()
