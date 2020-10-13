@@ -24,7 +24,8 @@ def extract_hs_stock_codes():
 
 def extract_asx_stock_codes():
     df = pd.read_csv("data/asx_listed_companies.csv")
-    df["ASX code"].to_csv("data/asx_watchlist", header=False, index=False)
+
+    df["ASX code"].apply(lambda x: x.lower() + ".ax").to_csv("data/asx_watchlist", header=False, index=False)
 
 
 if __name__ == "__main__":
