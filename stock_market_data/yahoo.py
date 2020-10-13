@@ -4,7 +4,7 @@
 
 import os
 
-from yahoo_fin.stock_info import get_data, get_dividends, get_splits
+from yahoo_fin.stock_info import get_data
 
 
 def get_stock_historical_data(stock_code, start_date=None, end_date=None, path="data/asx_stock/csv"):
@@ -19,8 +19,8 @@ def get_stock_historical_data(stock_code, start_date=None, end_date=None, path="
     # Get historical data.
     stock_info_func_dict = {
         "price": get_data,
-        "dividend": get_dividends,
-        "splits": get_splits
+        # "dividend": get_dividends,
+        # "splits": get_splits
     }
     for data_type in stock_info_func_dict:
         try:
