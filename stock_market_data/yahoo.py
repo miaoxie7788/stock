@@ -78,14 +78,18 @@ if __name__ == "__main__":
 
     # Get HS stock historical data.
     with open("data/hs_stock_codes") as f:
-        hs_stocks = [stock.strip() for stock in f.readlines()]
+        hs_stock_codes = [stock.strip() for stock in f.readlines()]
 
-    for stock in hs_stocks:
-        get_stock_historical_data(stock, path="data/hs_stock/csv")
+    hs_path = "data/stock"
+    for stock_code in hs_stock_codes:
+        dfs = get_stock_historical_data(stock_code=stock_code, data_types=["price"])
+        export_stock_info_df_to_csv(dfs, hs_path)
 
     # Get ASX stock historical data.
     with open("data/asx_200_stock_codes") as f:
-        asx_stocks = [stock.strip() for stock in f.readlines()]
+        asx_stock_codes = [stock.strip() for stock in f.readlines()]
 
-    for stock in asx_stocks:
-        get_stock_historical_data(stock, path="data/asx_stock/csv")
+    asx_path = "data/stock"
+    for stock_code in asx_stock_codes:
+        dfs = get_stock_historical_data(stock_code=stock_code, data_types=["price"])
+        export_stock_info_df_to_csv(dfs, asx_path)
