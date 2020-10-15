@@ -3,7 +3,7 @@ import re
 
 import pandas as pd
 
-from candlestick.evaluate import evaluate_any_higher_price, scan_hammer
+from candlestick.evaluate import evaluate_any_higher_price, scan_hammer, debug
 
 pd.set_option('display.max_columns', None)
 
@@ -47,8 +47,8 @@ def test_stock(stock_code, stock_params, path="data/asx_stock/csv"):
         **params_dict
     }
 
-    # print(windows_df0[["date", "higher_fut_price"]])
-    # debug(windows_df0)
+    print(windows_df0[["date", "higher_fut_price"]])
+    debug(windows_df0)
     print(result)
     return result
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # result_df = pd.DataFrame([test_stock(stock, params_dict, "data/asx_stock/csv") for stock in asx_stocks])
     # result_df.to_csv("asx_scan_hammer_results2.csv", index=False, header=True)
 
-    with open("data/hs_stock_codes_1_800") as f:
+    with open("data/hs_stock_codes") as f:
         hs_stocks = [stock.strip() for stock in f.readlines()]
 
     params_dict = {
@@ -85,5 +85,6 @@ if __name__ == "__main__":
         "enhanced": True,
     }
 
+    hs_stocks = ["688229.ss"]
     result_df = pd.DataFrame([test_stock(stock, params_dict, "data/hs_stock/csv") for stock in hs_stocks])
-    result_df.to_csv("hs_scan_hammer_results2.csv", index=False, header=True)
+    # result_df.to_csv("hs_scan_hammer_results2.csv", index=False, header=True)
