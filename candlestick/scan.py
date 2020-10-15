@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 
 from candlestick.core.signal import is_hammer_signal
-from stock_market_data.yahoo import get_stock_historical_data
+from stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
 def get_data(watchlist="hs_watchlist", market="hs_stock", last_days=21, path="data/candlestick"):
@@ -32,7 +32,12 @@ def get_data(watchlist="hs_watchlist", market="hs_stock", last_days=21, path="da
     end_date = today + timedelta(days=1)
 
     for stock_code in stock_codes:
-        get_stock_historical_data(stock_code=stock_code, start_date=start_date, end_date=end_date, path=data_path)
+        dfs = get_stock_historical_data(stock_code=stock_code,
+                                        data_types=["price"],
+                                        start_date=start_date,
+                                        end_date=end_date)
+
+        export_stock_info_df_to_csv(dfs, path=data_path)
 
 
 def scan_daily_hammer_signal(params, watchlist="hs_stock_codes", market="hs_stock", path="data/candlestick"):
@@ -75,20 +80,20 @@ def scan_daily_hammer_signal(params, watchlist="hs_stock_codes", market="hs_stoc
 
 
 if __name__ == "__main__":
-    get_data(watchlist="hs_watchlist", market="hs_stock", last_days=21, path="data/candlestick")
-
-    hs_params_dict = {
-        "his_size": 5,
-        "fut_size": 2,
-        "abs_slope": 0.05,
-        "t1": 1,
-        "t3": 2,
-        "small_body": 0.1,
-        "enhanced": True,
-    }
-    scan_daily_hammer_signal(hs_params_dict, watchlist="hs_watchlist", market="hs_stock")
-
-    get_data(watchlist="asx_watchlist", market="asx_stock", last_days=21, path="data/candlestick")
+    # get_data(watchlist="hs_watchlist", market="hs_stock", last_days=21, path="data/candlestick")
+    #
+    # hs_params_dict = {
+    #     "his_size": 5,
+    #     "fut_size": 2,
+    #     "abs_slope": 0.05,
+    #     "t1": 1,
+    #     "t3": 2,
+    #     "small_body": 0.1,
+    #     "enhanced": True,
+    # }
+    # scan_daily_hammer_signal(hs_params_dict, watchlist="hs_watchlist", market="hs_stock")
+    #
+    # get_data(watchlist="asx_watchlist", market="asx_stock", last_days=21, path="data/candlestick")
 
     asx_params_dict = {
         "his_size": 5,
