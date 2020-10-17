@@ -48,7 +48,12 @@ def scan_daily_hammer_signal(params, watchlist="data/candlestick/hs_watchlist", 
             code=code,
             date_type="price")
 
-        price_df = pd.read_csv(os.path.join(stock_path, name))
+        filename = os.path.join(stock_path, name)
+        if os.path.exists(filename):
+            price_df = pd.read_csv(filename)
+        else:
+            print("{stock} does not have data.".format(stock=stock_code))
+            continue
 
         # By default, it scans the last candlestick in the price_df.
         his_candlesticks = price_df.iloc[-params["his_size"] - 1:].to_dict(orient="records")
@@ -71,41 +76,41 @@ def scan_daily_hammer_signal(params, watchlist="data/candlestick/hs_watchlist", 
 if __name__ == "__main__":
     # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
 
-    # hs_params_dict = {
-    #     "his_size": 5,
-    #     "fut_size": 2,
-    #     "abs_slope": 0.05,
-    #     "t1": 1,
-    #     "t3": 2,
-    #     "small_body": 0.1,
-    #     "enhanced": True,
-    # }
-    # hs_signals = scan_daily_hammer_signal(params=hs_params_dict,
-    #                                       watchlist="data/candlestick/hs_watchlist",
-    #                                       stock_path="data/candlestick/stock")
-    #
-    # pd.DataFrame(hs_signals).to_csv("data/candlestick/results/hammer_signal_hs_stock_20201017",
-    #                                 index=False,
-    #                                 header=True)
-
-    # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
-
-    asx_params_dict = {
+    hs_params_dict = {
         "his_size": 5,
         "fut_size": 2,
-        "abs_slope": 0.01,
+        "abs_slope": 0.05,
         "t1": 1,
         "t3": 2,
         "small_body": 0.1,
         "enhanced": True,
     }
+    hs_signals = scan_daily_hammer_signal(params=hs_params_dict,
+                                          watchlist="data/candlestick/hs_watchlist",
+                                          stock_path="data/candlestick/stock")
 
-    asx_signals = scan_daily_hammer_signal(params=asx_params_dict,
-                                           watchlist="data/candlestick/asx_watchlist",
-                                           stock_path="data/candlestick/stock")
+    pd.DataFrame(hs_signals).to_csv("data/candlestick/results/hammer_signal_hs_stock_{today}.csv".format(
+        today=datetime.today().strftime("%Y%m%d")),
+        index=False,
+        header=True)
 
-    # pd.DataFrame(asx_signals).to_csv("data/candlestick/results/hammer_signal_asx_stock_{today}}".format(
-    #     today=datetime.today().strftime("")
-    # ),
-    #                                  index=False,
-    #                                  header=True)
+    # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
+    #
+    # asx_params_dict = {
+    #     "his_size": 5,
+    #     "fut_size": 2,
+    #     "abs_slope": 0.02,
+    #     "t1": 1,
+    #     "t3": 2,
+    #     "small_body": 0.1,
+    #     "enhanced": True,
+    # }
+    #
+    # asx_signals = scan_daily_hammer_signal(params=asx_params_dict,
+    #                                        watchlist="data/candlestick/asx_watchlist",
+    #                                        stock_path="data/candlestick/stock")
+    #
+    # pd.DataFrame(asx_signals).to_csv("data/candlestick/results/hammer_signal_asx_stock_{today}.csv".format(
+    #     today=datetime.today().strftime("%Y%m%d")),
+    #     index=False,
+    #     header=True)
