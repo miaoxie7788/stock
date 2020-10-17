@@ -1,12 +1,18 @@
 from datetime import datetime, timedelta
 
-from stock_market_data.yahoo import get_stock_historical_data
+from stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 if __name__ == "__main__":
-    path = "data/asx_stock/csv"
-    stock_code = "car.ax"
+    stock_code = "tls.ax"
+    data_types = ["price", "dividend", "splits"]
+    end_date = datetime.today()
+    start_date = end_date - timedelta(days=7)
 
-    today = datetime.today()
-    start_date = today - timedelta(days=1)
+    dfs = get_stock_historical_data(stock_code=stock_code,
+                                    data_types=data_types,
+                                    start_date=None,
+                                    end_date=end_date,
+                                    full_csv_filename=True)
 
-    get_stock_historical_data(stock_code, path=path)
+    path = "data/test/"
+    export_stock_info_df_to_csv(dfs, path=path)
