@@ -19,15 +19,17 @@ def export_stock_info_df_to_csv(stock_info_df_dict, path="data"):
         df.to_csv(os.path.join(path, name), index=False, header=True)
 
 
-def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=None):
+def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=None, full_csv_filename=True):
     """
         Get historical price, dividend and splits data for a stock between start_date and end_date.
 
-    :param stock_code:      stock code, e.g., car.ax
-    :param data_types:      ["price", "dividend", "splits"]
-    :param start_date:      start date
-    :param end_date:        end date
-    :return:                stock_info_df_dict
+    :param stock_code:              stock code, e.g., car.ax, 603678.ss, 002315.sz
+    :param data_types:              ["price", "dividend", "splits"]
+    :param start_date:              start date, datetime
+    :param end_date:                end date, datetime
+    :param full_csv_filename:       full_csv_filename: {market}_{code}_{date_type}_{start_date}_{end_date}.csv
+                                    short_csv_filename: {market}_{code}_{date_type}.csv
+    :return:                        stock_info_df_dict: {csv_filename: df}
     """
 
     # Get historical data.
@@ -52,12 +54,17 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
 
             # Split a stock_code into code and market, e.g, car.ax -> car, ax.
             code, market = stock_code.split(".")
-            name = "{market}_{code}_{date_type}_{start_date}_{end_date}.csv".format(
+            name = "{market}_{code}_{date_type}".format(
                 market=market,
                 code=code,
-                date_type=data_type,
-                start_date=start_date.strftime("%Y%m%d"),
-                end_date=end_date.strftime("%Y%m%d"))
+                date_type=data_type)
+            if full_csv_filename:
+                name += "_{start_date}_{end_date}.csv".format(
+                    start_date=start_date.strftime("%Y%m%d"),
+                    end_date=end_date.strftime("%Y%m%d"))
+            else:
+                name += ".csv"
+
             stock_info_df_dict[name] = df
 
             print("Historical {data_type} data are downloaded for {stock_code} between {start_date} and {end_date}".

@@ -11,7 +11,8 @@ if __name__ == "__main__":
     dfs = get_stock_historical_data(stock_code=stock_code,
                                     data_types=data_types,
                                     start_date=None,
-                                    end_date=end_date)
+                                    end_date=end_date,
+                                    full_csv_filename=True)
 
     path = "data/test/"
     export_stock_info_df_to_csv(dfs, path=path)
