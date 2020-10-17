@@ -12,20 +12,15 @@ from candlestick.core.signal import is_hammer_signal
 from stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
-def get_data(watchlist="hs_watchlist", market="hs_stock", last_days=21, path="data/candlestick"):
+def get_data(watchlist="data/candlestick/hs_watchlist", last_days=21, path="data/candlestick/stock"):
     """
         Get historical data for stocks presented in the watchlist between today and today-last_days.
         Note, last_days should be larger than his_size.
     """
 
     # Read watchlist.
-    watchlist_path = os.path.join(path, watchlist)
-    with open(watchlist_path) as f:
+    with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
-
-    data_path = os.path.join(path, market)
-    if not os.path.exists(data_path):
-        os.mkdir(data_path)
 
     today = datetime.today()
     start_date = today - timedelta(days=last_days)
@@ -37,29 +32,31 @@ def get_data(watchlist="hs_watchlist", market="hs_stock", last_days=21, path="da
                                         start_date=start_date,
                                         end_date=end_date)
 
-        export_stock_info_df_to_csv(dfs, path=data_path)
+        export_stock_info_df_to_csv(dfs, path=path)
 
 
-def scan_daily_hammer_signal(params, watchlist="hs_stock_codes", market="hs_stock", path="data/candlestick"):
-    watchlist_path = os.path.join(path, watchlist)
-    with open(watchlist_path) as f:
+def scan_daily_hammer_signal(params, watchlist="hs_stock_codes", path="data/candlestick/stock"):
+    with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
-
-    data_path = os.path.join(path, market)
 
     signals = list()
     for stock_code in stock_codes:
-        stock_path = os.path.join(data_path, stock_code)
-        filenames = os.listdir(stock_path)
-        if not filenames:
-            continue
-        stock_price = os.path.join(stock_path, [filename for filename in filenames if re.match(
-            r"hist_price_\d{8}_\d{8}.csv", filename)][0])
+        code, market = stock_code.split(".")
+        filename_regex = "{market}_{code}_{date_type}_{start_date}_{end_date}.csv".format(
+            market=market,
+            code=code,
+            date_type="price",
+            start_date=r"\d{8}",
+            end_date=r"\d{8}")
 
-        stock_df = pd.read_csv(stock_price)
+        filenames = os.listdir(path)
+        price_filename = os.path.join(path,
+                                      [filename for filename in filenames if re.match(filename_regex, filename)][0])
 
-        his_candlesticks = stock_df.iloc[-params["his_size"] - 1:].to_dict(orient="records")
-        cur_candlestick = stock_df.iloc[-1].to_dict()
+        price_df = pd.read_csv(price_filename)
+
+        his_candlesticks = price_df.iloc[-params["his_size"] - 1:].to_dict(orient="records")
+        cur_candlestick = price_df.iloc[-1].to_dict()
 
         if is_hammer_signal(cur_candlestick, his_candlesticks,
                             abs_slope=params["abs_slope"],
@@ -67,8 +64,8 @@ def scan_daily_hammer_signal(params, watchlist="hs_stock_codes", market="hs_stoc
                             t3=params["t3"],
                             small_body=params["small_body"],
                             enhanced=params["enhanced"]):
-            print("A signal is found for {stock} on {day}".format(stock=stock_code, day=stock_df.iloc[-1]["date"]))
-            signals.append({"date": stock_df.iloc[-1]["date"], "stock_code": stock_code})
+            print("A signal is found for {stock} on {day}".format(stock=stock_code, day=price_df.iloc[-1]["date"]))
+            signals.append({"date": price_df.iloc[-1]["date"], "stock_code": stock_code})
         # else:
         #     print("{stock} has been scanned.".format(stock=stock_code))
 
@@ -80,28 +77,29 @@ def scan_daily_hammer_signal(params, watchlist="hs_stock_codes", market="hs_stoc
 
 
 if __name__ == "__main__":
-    # get_data(watchlist="hs_watchlist", market="hs_stock", last_days=21, path="data/candlestick")
-    #
-    # hs_params_dict = {
-    #     "his_size": 5,
-    #     "fut_size": 2,
-    #     "abs_slope": 0.05,
-    #     "t1": 1,
-    #     "t3": 2,
-    #     "small_body": 0.1,
-    #     "enhanced": True,
-    # }
-    # scan_daily_hammer_signal(hs_params_dict, watchlist="hs_watchlist", market="hs_stock")
-    #
-    # get_data(watchlist="asx_watchlist", market="asx_stock", last_days=21, path="data/candlestick")
+    # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, path="data/candlestick/stock")
 
-    asx_params_dict = {
+    hs_params_dict = {
         "his_size": 5,
         "fut_size": 2,
-        "abs_slope": 0.01,
+        "abs_slope": 0.05,
         "t1": 1,
         "t3": 2,
         "small_body": 0.1,
         "enhanced": True,
     }
-    scan_daily_hammer_signal(asx_params_dict, watchlist="asx_watchlist", market="asx_stock")
+    scan_daily_hammer_signal(hs_params_dict, watchlist="data/candlestick/hs_watchlist", path="data/candlestick/stock")
+
+    # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, path="data/candlestick/stock")
+    #
+    # asx_params_dict = {
+    #     "his_size": 5,
+    #     "fut_size": 2,
+    #     "abs_slope": 0.01,
+    #     "t1": 1,
+    #     "t3": 2,
+    #     "small_body": 0.1,
+    #     "enhanced": True,
+    # }
+    #
+    # scan_daily_hammer_signal(asx_params_dict, watchlist="data/candlestick/asx_watchlist", path="data/candlestick/stock")
