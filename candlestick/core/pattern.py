@@ -1,9 +1,17 @@
 """
-    Candlestick techniques, patterns
+    Technical analysis - candlesticks
 
     reference:
-    https://en.wikipedia.org/wiki/Candlestick_pattern
+        https://en.wikipedia.org/wiki/Candlestick_pattern
+        https://school.stockcharts.com/doku.php?id=chart_analysis:introduction_to_candlesticks
+        https://www.5paisa.com/school/candlestick-patterns
+        https://www.ig.com/au/trading-strategies/16-candlestick-patterns-every-trader-should-know-180615
+
+        https://www.investing.com/
+        https://stockcharts.com/
 """
+
+from candlestick.core.trend import is_market_top_or_bottom
 
 
 def extract_candlestick(candlestick):
@@ -28,7 +36,7 @@ def is_bullish_or_bearish_candlestick(candlestick):
     return "bearish"
 
 
-# Simple candlestick patterns.
+# Candlestick patterns.
 def is_big_black_candle(candlestick, t1=5, t3=5, long_body=0.05):
     """
         Has an unusually long black body with a wide range between high and low. Prices open near the high and close
@@ -236,4 +244,53 @@ def is_shaven_bottom(candlestick):
     """
     pass
 
-# Complex candlestick patterns.
+
+def is_bullish_hammer(is_hammer_params, ref_candlesticks, abs_slope, enhanced=False):
+    """
+        Hammer candlesticks form when a security moves significantly lower after the open, but rallies to close well
+        above the intraday low. The resulting candlestick looks like a square lollipop with a long stick. If this
+        candlestick forms during a decline, then it is called a Hammer.
+
+    :param is_hammer_params:            A dict of candlestick, t1, t3 and small_body.
+    :param ref_candlesticks:            Historical candlesticks.
+    :param abs_slope:                   The absolute slope of the fitted downtrend line.
+    :param enhanced:                    If enhanced, the candlestick itself must be bullish.
+    :return:                            True / False
+    """
+
+    candlestick = is_hammer_params["candlestick"]
+    c1 = is_market_top_or_bottom(candlestick, ref_candlesticks, "low", abs_slope) == "bottom"
+    c2 = is_hammer(**is_hammer_params)
+
+    if not enhanced:
+        if c1 and c2:
+            return True
+    else:
+        c3 = is_bullish_or_bearish_candlestick(candlestick) == "bullish"
+        if c1 and c2 and c3:
+            return True
+
+    return False
+
+
+# TODO: is_bullish_inverted_hammer needs to be reviewed.    MX 18/10/2020
+# https://school.stockcharts.com/doku.php?id=chart_analysis:candlestick_pattern_dictionary
+def is_bullish_inverted_hammer(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced=False):
+    """
+        A one-day bullish reversal pattern. In a downtrend, the open is lower, then it trades higher, but closes near
+        its open, therefore looking like an inverted lollipop.
+
+    """
+
+    c1 = is_market_top_or_bottom(cur_candlestick, his_candlesticks, "low", abs_slope) == "bottom"
+    c2 = is_inverted_hammer(cur_candlestick, t1, t3, small_body)
+
+    if not enhanced:
+        if c1 and c2:
+            return True
+    else:
+        c3 = is_bullish_or_bearish_candlestick(cur_candlestick) == "bullish"
+        if c1 and c2 and c3:
+            return True
+
+    return False
