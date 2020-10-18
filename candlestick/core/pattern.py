@@ -36,7 +36,7 @@ def is_bullish_or_bearish_candlestick(candlestick):
     return "bearish"
 
 
-# Simple candlestick patterns.
+# Candlestick patterns.
 def is_big_black_candle(candlestick, t1=5, t3=5, long_body=0.05):
     """
         Has an unusually long black body with a wide range between high and low. Prices open near the high and close
@@ -245,17 +245,12 @@ def is_shaven_bottom(candlestick):
     pass
 
 
-# Complex candlestick patterns.
-
-
 def is_bullish_hammer(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced=False):
     """
-         The hammer candlestick pattern is formed of a short body with a long lower wick, and is found at the bottom
-         of a downward trend.
+         Hammer candlesticks form when a security moves significantly lower after the open, but rallies to close well
+         above the intraday low. The resulting candlestick looks like a square lollipop with a long stick. If this
+         candlestick forms during a decline, then it is called a Hammer.
 
-         A hammer shows that although there were selling pressures during the day, ultimately a strong buying
-         pressure drove the price back up. The colour of the body can vary, but green hammers indicate a stronger
-         bull market than red hammers.
     """
 
     c1 = is_market_top_or_bottom(cur_candlestick, his_candlesticks, "low", abs_slope) == "bottom"
@@ -272,13 +267,13 @@ def is_bullish_hammer(cur_candlestick, his_candlesticks, abs_slope, t1, t3, smal
     return False
 
 
-def is_inverted_hammer_signal(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced=False):
+# TODO: is_bullish_inverted_hammer needs to be reviewed.    MX 18/10/2020
+# https://school.stockcharts.com/doku.php?id=chart_analysis:candlestick_pattern_dictionary
+def is_bullish_inverted_hammer(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced=False):
     """
-        A similarly bullish pattern is the inverted hammer. The only difference being that the upper wick is long,
-        while the lower wick is short.
+        A one-day bullish reversal pattern. In a downtrend, the open is lower, then it trades higher, but closes near
+        its open, therefore looking like an inverted lollipop.
 
-        It indicates a buying pressure, followed by a selling pressure that was not strong enough to drive the market
-        price down. The inverse hammer suggests that buyers will soon have control of the market.
     """
 
     c1 = is_market_top_or_bottom(cur_candlestick, his_candlesticks, "low", abs_slope) == "bottom"
@@ -293,7 +288,3 @@ def is_inverted_hammer_signal(cur_candlestick, his_candlesticks, abs_slope, t1, 
             return True
 
     return False
-
-
-def is_bullish_engulfing_signal():
-    pass

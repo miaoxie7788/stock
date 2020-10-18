@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from candlestick.core.signal import is_hammer_signal, is_inverted_hammer_signal
+from candlestick.core.pattern import is_bullish_hammer, is_bullish_inverted_hammer
 
 
 def plot_candlestick(price_df):
@@ -103,7 +103,7 @@ def evaluate_hammer_signal(price_df, his_size, fut_size, abs_slope, t1, t3, smal
         cur_candlestick = price_df.iloc[t].to_dict()
         fut_candlesticks = price_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
 
-        if is_hammer_signal(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced):
+        if is_bullish_hammer(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced):
             signal = True
         else:
             signal = False
@@ -153,7 +153,7 @@ def evaluate_inverted_hammer_signal(price_df, his_size, fut_size, abs_slope, t1,
         cur_candlestick = price_df.iloc[t].to_dict()
         fut_candlesticks = price_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
 
-        if is_inverted_hammer_signal(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced):
+        if is_bullish_inverted_hammer(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced):
             signal = True
         else:
             signal = False

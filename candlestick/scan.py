@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from candlestick.core.signal import is_hammer_signal
+from candlestick.core.pattern import is_bullish_hammer
 from stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
@@ -59,12 +59,12 @@ def scan_daily_hammer_signal(params, watchlist="data/candlestick/hs_watchlist", 
         his_candlesticks = price_df.iloc[-params["his_size"] - 1:].to_dict(orient="records")
         cur_candlestick = price_df.iloc[-1].to_dict()
 
-        if is_hammer_signal(cur_candlestick, his_candlesticks,
-                            abs_slope=params["abs_slope"],
-                            t1=params["t1"],
-                            t3=params["t3"],
-                            small_body=params["small_body"],
-                            enhanced=params["enhanced"]):
+        if is_bullish_hammer(cur_candlestick, his_candlesticks,
+                             abs_slope=params["abs_slope"],
+                             t1=params["t1"],
+                             t3=params["t3"],
+                             small_body=params["small_body"],
+                             enhanced=params["enhanced"]):
             print("A signal is found for {stock} on {day}".format(stock=stock_code, day=price_df.iloc[-1]["date"]))
             signals.append({"date": price_df.iloc[-1]["date"], "stock_code": stock_code})
         # else:
