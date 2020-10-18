@@ -3,7 +3,7 @@ import re
 
 import pandas as pd
 
-from candlestick.evaluate import evaluate_any_higher_price, scan_hammer, debug
+from candlestick.evaluate import evaluate_any_higher_price, evaluate_hammer_signal, debug
 
 pd.set_option('display.max_columns', None)
 
@@ -20,12 +20,12 @@ def test_stock(stock_code, stock_params, path="data/asx_stock/"):
         end_date=r"\d{8}")
 
     filenames = os.listdir(path)
-    stock_price_filename = os.path.join(path,
-                                        [filename for filename in filenames if re.match(filename_regex, filename)][0])
+    price_filename = os.path.join(path,
+                                  [filename for filename in filenames if re.match(filename_regex, filename)][0])
 
-    stock_df = pd.read_csv(stock_price_filename)
+    price_df = pd.read_csv(price_filename)
 
-    windows = scan_hammer(stock_df, **stock_params)
+    windows = evaluate_hammer_signal(price_df, **stock_params)
 
     windows_df = evaluate_any_higher_price(windows, key="high", a_share=True)
     windows_df0 = windows_df.loc[windows_df["is_hammer_signal"]]
@@ -40,7 +40,7 @@ def test_stock(stock_code, stock_params, path="data/asx_stock/"):
         rate0 = len(windows_df0[windows_df0["higher_fut_price"] >= 0]) / n0
 
     # scale: billion
-    trade_scale = round(stock_df.apply(lambda row: row["volume"] * row["close"], axis="columns").mean() / 1000000000, 3)
+    trade_scale = round(price_df.apply(lambda row: row["volume"] * row["close"], axis="columns").mean() / 1000000000, 3)
 
     result = {
         "stock_code": stock_code,
@@ -54,9 +54,10 @@ def test_stock(stock_code, stock_params, path="data/asx_stock/"):
         **params_dict
     }
 
+    print(result)
     print(windows_df0[["date", "higher_fut_price"]])
     debug(windows_df0)
-    print(result)
+
     return result
 
 
@@ -91,7 +92,14 @@ if __name__ == "__main__":
         "small_body": 0.1,
         "enhanced": True,
     }
+    #
+    # 600909.ss
+    # 601878.ss
+    # 688008.ss
+    # 688018.ss
+    # 300339.sz
+    # 603368.ss     0.82        2%
 
-    hs_stocks = ["300789.sz"]
+    hs_stocks = ["002565.sz"]
     result_df = pd.DataFrame([test_stock(stock, params_dict, "data/stock") for stock in hs_stocks])
     # result_df.to_csv("hs_scan_hammer_results2.csv", index=False, header=True)

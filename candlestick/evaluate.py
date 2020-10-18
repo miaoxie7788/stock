@@ -1,3 +1,6 @@
+import os
+import re
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -5,13 +8,13 @@ import plotly.graph_objects as go
 from candlestick.core.signal import is_hammer_signal, is_inverted_hammer_signal
 
 
-def plot_candlestick(candlestick_df):
+def plot_candlestick(price_df):
     fig = go.Figure(data=[go.Candlestick(
-        x=candlestick_df['date'],
-        open=candlestick_df['open'],
-        high=candlestick_df['high'],
-        low=candlestick_df['low'],
-        close=candlestick_df['close'])])
+        x=price_df['date'],
+        open=price_df['open'],
+        high=price_df['high'],
+        low=price_df['low'],
+        close=price_df['close'])])
 
     fig.show()
 
@@ -65,17 +68,40 @@ def evaluate_bullish_trend(windows, key="close", print_detail=True):
     pass
 
 
-def scan_hammer(candlestick_df, his_size, fut_size, abs_slope, t1, t3, small_body, enhanced):
+def evaluate_signal_confidence(stock_code, params, eval_signal, stock_path="data/stock"):
+    code, market = stock_code.split(".")
+    name_regex = "{market}_{code}_{date_type}_{start_date}_{end_date}.csv".format(
+        market=market,
+        code=code,
+        date_type="price",
+        start_date=r"\d{8}",
+        end_date=r"\d{8}")
+
+    names = os.listdir(stock_path)
+    filename = os.path.join(stock_path, [name for name in names if re.match(name_regex, name)][0])
+
+    price_df = pd.read_csv(filename)
+
+    eval_signal_func_dict = {
+        "hammer": evaluate_hammer_signal,
+        "inverted_hammer": evaluate_inverted_hammer_signal,
+    }
+
+    eval_signal_func = eval_signal_func_dict[eval_signal]
+    windows = eval_signal_func(price_df, **params)
+
+
+def evaluate_hammer_signal(price_df, his_size, fut_size, abs_slope, t1, t3, small_body, enhanced):
     """
-        Scan hammer signals in each window across the candlestick df.
+        Evaluate how a stock performs historically against hammer_signal.
     """
 
-    n = len(candlestick_df)
+    n = len(price_df)
     windows = list()
     for t in range(his_size, n - fut_size):
-        his_candlesticks = candlestick_df.iloc[t - his_size: t].to_dict(orient="records")
-        cur_candlestick = candlestick_df.iloc[t].to_dict()
-        fut_candlesticks = candlestick_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
+        his_candlesticks = price_df.iloc[t - his_size: t].to_dict(orient="records")
+        cur_candlestick = price_df.iloc[t].to_dict()
+        fut_candlesticks = price_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
 
         if is_hammer_signal(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced):
             signal = True
@@ -87,19 +113,45 @@ def scan_hammer(candlestick_df, his_size, fut_size, abs_slope, t1, t3, small_bod
 
         windows.append(window)
 
+    # windows_df = evaluate_any_higher_price(windows, key="high", a_share=True)
+    # windows_df0 = windows_df.loc[windows_df["is_hammer_signal"]]
+    #
+    # n = len(windows_df)
+    # n0 = len(windows_df0)
+    #
+    # rate = len(windows_df[windows_df["higher_fut_price"] >= 0]) / n
+    # if n0 == 0:
+    #     rate0 = 0
+    # else:
+    #     rate0 = len(windows_df0[windows_df0["higher_fut_price"] >= 0]) / n0
+    #
+    # # scale: billion
+    # trade_scale = round(price_df.apply(lambda row: row["volume"] * row["close"], axis="columns").mean() / 1000000000, 3)
+    #
+    # result = {
+    #     "stock_code": stock_code,
+    #     "trade_scale": trade_scale,
+    #     "trade_days": n,
+    #     "n_hammer_signal": n0,
+    #     "benchmark_success_rate": round(rate, 3),
+    #     "success_rate": round(rate0, 3),
+    #     "improvement": round(rate0 / rate - 1, 3),
+    #     "method": "any_higher_high_price",
+    #     **params_dict
+    # }
     return windows
 
 
-def scan_inverted_hammer(candlestick_df, his_size, fut_size, abs_slope, t1, t3, small_body, enhanced):
+def evaluate_inverted_hammer_signal(price_df, his_size, fut_size, abs_slope, t1, t3, small_body, enhanced):
     """
-        Scan inverted_hammer signals in each window across the candlestick df.
+        Scan inverted_hammer signals in each window across the price_df.
     """
-    n = len(candlestick_df)
+    n = len(price_df)
     windows = list()
     for t in range(his_size, n - fut_size):
-        his_candlesticks = candlestick_df.iloc[t - his_size: t].to_dict(orient="records")
-        cur_candlestick = candlestick_df.iloc[t].to_dict()
-        fut_candlesticks = candlestick_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
+        his_candlesticks = price_df.iloc[t - his_size: t].to_dict(orient="records")
+        cur_candlestick = price_df.iloc[t].to_dict()
+        fut_candlesticks = price_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
 
         if is_inverted_hammer_signal(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced):
             signal = True

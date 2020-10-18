@@ -12,13 +12,13 @@ def test_stock(stock_code, stock_params, path="data/asx_stock/csv"):
     # print("Testing {stock_code}".format(stock_code=stock_code))
     stock_path = os.path.join(path, stock_code)
     filenames = os.listdir(stock_path)
-    stock_price_filename = os.path.join(stock_path,
-                                        [filename for filename in filenames
-                                         if re.match(r"hist_price_\d{8}_\d{8}.csv", filename)][0])
+    price_filename = os.path.join(stock_path,
+                                  [filename for filename in filenames
+                                   if re.match(r"hist_price_\d{8}_\d{8}.csv", filename)][0])
 
-    stock_df = pd.read_csv(stock_price_filename)
+    price_df = pd.read_csv(price_filename)
 
-    windows = scan_inverted_hammer(stock_df, **stock_params)
+    windows = scan_inverted_hammer(price_df, **stock_params)
 
     windows_df = evaluate_any_higher_price(windows, key="open")
     windows_df0 = windows_df.loc[windows_df["is_inverted_hammer_signal"]]
@@ -33,7 +33,7 @@ def test_stock(stock_code, stock_params, path="data/asx_stock/csv"):
         rate0 = len(windows_df0[windows_df0["higher_fut_price"] >= 0]) / n0
 
     # scale: billion
-    trade_scale = round(stock_df.apply(lambda row: row["volume"] * row["close"], axis="columns").mean() / 1000000000, 3)
+    trade_scale = round(price_df.apply(lambda row: row["volume"] * row["close"], axis="columns").mean() / 1000000000, 3)
 
     result = {
         "stock_code": stock_code,

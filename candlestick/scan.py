@@ -77,7 +77,7 @@ if __name__ == "__main__":
     # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
 
     hs_params_dict = {
-        "his_size": 5,
+        "his_size": 6,
         "fut_size": 2,
         "abs_slope": 0.05,
         "t1": 1,
