@@ -99,16 +99,23 @@ def evaluate_hammer_signal(price_df, his_size, fut_size, abs_slope, t1, t3, smal
     n = len(price_df)
     windows = list()
     for t in range(his_size, n - fut_size):
-        his_candlesticks = price_df.iloc[t - his_size: t].to_dict(orient="records")
-        cur_candlestick = price_df.iloc[t].to_dict()
+        ref_candlesticks = price_df.iloc[t - his_size: t].to_dict(orient="records")
+        candlestick = price_df.iloc[t].to_dict()
         fut_candlesticks = price_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
 
-        if is_bullish_hammer(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced):
+        is_hammer_params = {
+            "candlestick": candlestick,
+            "t1": t1,
+            "t3": t3,
+            "small_body": small_body
+        }
+
+        if is_bullish_hammer(is_hammer_params, ref_candlesticks, abs_slope, enhanced):
             signal = True
         else:
             signal = False
 
-        window = {"date": cur_candlestick["date"], "cur": cur_candlestick, "his": his_candlesticks,
+        window = {"date": candlestick["date"], "cur": candlestick, "his": ref_candlesticks,
                   "fut": fut_candlesticks, "is_hammer_signal": signal}
 
         windows.append(window)

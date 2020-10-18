@@ -56,14 +56,17 @@ def scan_daily_hammer_signal(params, watchlist="data/candlestick/hs_watchlist", 
             continue
 
         # By default, it scans the last candlestick in the price_df.
-        his_candlesticks = price_df.iloc[-params["his_size"] - 1:].to_dict(orient="records")
-        cur_candlestick = price_df.iloc[-1].to_dict()
+        ref_candlesticks = price_df.iloc[-params["his_size"] - 1:].to_dict(orient="records")
+        candlestick = price_df.iloc[-1].to_dict()
 
-        if is_bullish_hammer(cur_candlestick, his_candlesticks,
+        is_hammer_params = {
+            "candlestick": candlestick,
+            "t1": params["t1"],
+            "t3": params["t3"],
+            "small_body": params["small_body"]
+        }
+        if is_bullish_hammer(is_hammer_params, ref_candlesticks,
                              abs_slope=params["abs_slope"],
-                             t1=params["t1"],
-                             t3=params["t3"],
-                             small_body=params["small_body"],
                              enhanced=params["enhanced"]):
             print("A signal is found for {stock} on {day}".format(stock=stock_code, day=price_df.iloc[-1]["date"]))
             signals.append({"date": price_df.iloc[-1]["date"], "stock_code": stock_code})
