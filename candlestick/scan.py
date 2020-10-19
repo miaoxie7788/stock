@@ -35,6 +35,9 @@ def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path
         export_stock_info_df_to_csv(dfs, path=stock_path)
 
 
+# def scan_bullish_hammer(price_df, )
+#
+
 def scan_daily_hammer_signal(params, watchlist="data/candlestick/hs_watchlist", stock_path="data/candlestick/stock"):
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
@@ -56,18 +59,10 @@ def scan_daily_hammer_signal(params, watchlist="data/candlestick/hs_watchlist", 
             continue
 
         # By default, it scans the last candlestick in the price_df.
-        ref_candlesticks = price_df.iloc[-params["his_size"] - 1:].to_dict(orient="records")
+        ref_candlesticks = price_df.iloc[-params["ref_size"] - 1:].to_dict(orient="records")
         candlestick = price_df.iloc[-1].to_dict()
 
-        is_hammer_params = {
-            "candlestick": candlestick,
-            "t1": params["t1"],
-            "t3": params["t3"],
-            "small_body": params["small_body"]
-        }
-        if is_bullish_hammer(is_hammer_params, ref_candlesticks,
-                             abs_slope=params["abs_slope"],
-                             enhanced=params["enhanced"]):
+        if is_bullish_hammer(candlestick, ref_candlesticks, hs_params["bullish_hammer_params"]):
             print("A signal is found for {stock} on {day}".format(stock=stock_code, day=price_df.iloc[-1]["date"]))
             signals.append({"date": price_df.iloc[-1]["date"], "stock_code": stock_code})
         # else:
@@ -79,16 +74,19 @@ def scan_daily_hammer_signal(params, watchlist="data/candlestick/hs_watchlist", 
 if __name__ == "__main__":
     # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
 
-    hs_params_dict = {
-        "his_size": 6,
-        "fut_size": 2,
-        "abs_slope": 0.05,
-        "t1": 1,
-        "t3": 2,
-        "small_body": 0.1,
-        "enhanced": True,
+    hs_params = {
+        "bullish_hammer_params": {
+            "hammer_params": {"t1": 1,
+                              "t3": 2,
+                              "small_body": 0.1},
+            "key": "low",
+            "abs_slope": 0.05,
+            "enhanced": True,
+        },
+        "ref_size": 5,
     }
-    hs_signals = scan_daily_hammer_signal(params=hs_params_dict,
+
+    hs_signals = scan_daily_hammer_signal(params=hs_params,
                                           watchlist="data/candlestick/hs_watchlist",
                                           stock_path="data/candlestick/stock")
 
