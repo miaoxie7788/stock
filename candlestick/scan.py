@@ -35,7 +35,7 @@ def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path
         export_stock_info_df_to_csv(dfs, path=stock_path)
 
 
-def scan_bullish_hammer(price_df, params, date=None):
+def scan_bullish_hammer(price_df, params):
     """
     price_df =
             date  open  high   low  close  adjclose    volume     ticker
@@ -64,29 +64,35 @@ def scan_bullish_hammer(price_df, params, date=None):
     price_df = price_df.sort_values(by="date", axis='index', ascending=True) \
         .reset_index().drop(labels="index", axis="columns")
 
+    date = params["date"]
     # By default, it scans the last candlestick in the price_df.
     if not date:
         date_index = len(price_df) - 1
         date = price_df.iloc[date_index]["date"]
     else:
-        date_index = price_df.index[price_df["date"] == date][0]
+        date_index = price_df.index[price_df["date"] == date]
+        if len(date_index) > 0:
+            date_index = date_index[0]
+        else:
+            return None
 
     ref_size = params["ref_size"]
     stock_code = price_df.iloc[date_index]["ticker"]
 
-    pattern = None
     if date_index < ref_size:
         print("{stock_code} does not have {ref_size} ref candlesticks."
               .format(ref_size=ref_size, stock_code=stock_code))
-    else:
-        candlestick = price_df.iloc[date_index].to_dict()
-        ref_candlesticks = price_df.iloc[date_index - ref_size:date_index].to_dict(orient="records")
+        return None
 
-        if is_bullish_hammer(candlestick, ref_candlesticks, params["bullish_hammer_params"]):
-            print("A bullish hammer is found for {stock} on {day}".format(stock=stock_code, day=date))
-            pattern = {"date": date, "stock_code": stock_code, "pattern": "bullish_hammer"}
+    candlestick = price_df.iloc[date_index].to_dict()
+    ref_candlesticks = price_df.iloc[date_index - ref_size:date_index].to_dict(orient="records")
 
-    return pattern
+    if is_bullish_hammer(candlestick, ref_candlesticks, params["bullish_hammer_params"]):
+        print("A bullish hammer is found for {stock} on {day}".format(stock=stock_code, day=date))
+        pattern = {"date": date, "stock_code": stock_code, "pattern": "bullish_hammer"}
+        return pattern
+
+    return None
 
 
 def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path="data/candlestick/stock"):
@@ -118,6 +124,7 @@ def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path=
 
 if __name__ == "__main__":
     # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
+    # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
 
     hs_params = {
         "bullish_hammer_params": {
@@ -128,20 +135,19 @@ if __name__ == "__main__":
             "abs_slope": 0.05,
             "enhanced": True,
         },
-        "ref_size": 6,
+        "ref_size": 5,
+        "date": "2020-10-20"
     }
 
     hs_patterns = scan_patterns(params=hs_params,
                                 watchlist="data/candlestick/hs_watchlist",
                                 stock_path="data/candlestick/stock")
 
-    pd.DataFrame(hs_patterns).to_csv("data/candlestick/results/hs_stock_patterns_{today}.csv".format(
-        today=datetime.today().strftime("%Y%m%d")),
-        index=False,
-        header=True)
+    # pd.DataFrame(hs_patterns).to_csv("data/candlestick/results/hs_stock_patterns_{today}.csv".format(
+    #     today=datetime.today().strftime("%Y%m%d")),
+    #     index=False,
+    #     header=True)
 
-    # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
-    #
     # asx_params = {
     #     "bullish_hammer_params": {
     #         "hammer_params": {"t1": 1,
@@ -152,6 +158,7 @@ if __name__ == "__main__":
     #         "enhanced": True,
     #     },
     #     "ref_size": 5,
+    #     "date": None
     # }
     # asx_patterns = scan_patterns(params=asx_params,
     #                              watchlist="data/candlestick/asx_watchlist",
