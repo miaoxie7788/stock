@@ -35,34 +35,56 @@ def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path
         export_stock_info_df_to_csv(dfs, path=stock_path)
 
 
-def scan_bullish_hammer(price_df, params):
+def scan_bullish_hammer(price_df, params, date=None):
     """
-        params = {
-            "bullish_hammer_params": {
-                "hammer_params": {"t1": 1,
-                                  "t3": 2,
-                                  "small_body": 0.05},
-                "key": "low",
-                "abs_slope": 0.25,
-                "enhanced": True,
-            },
-            "ref_size": 5,
-            }
+    price_df =
+            date  open  high   low  close  adjclose    volume     ticker
+        0  2020-10-09  9.44  9.48  9.40   9.42      9.42  39772687  600000.SS
+        1  2020-10-12  9.45  9.63  9.42   9.59      9.59  66671637  600000.SS
+        2  2020-10-13  9.58  9.58  9.52   9.54      9.54  28059097  600000.SS
+        3  2020-10-14  9.54  9.56  9.50   9.53      9.53  42969217  600000.SS
+        4  2020-10-15  9.54  9.72  9.53   9.62      9.62  66146732  600000.SS
+        5  2020-10-16  9.61  9.77  9.60   9.72      9.72  74850236  600000.SS
+        6  2020-10-19  9.73  9.93  9.64   9.65      9.65  84532385  600000.SS
+        7  2020-10-20  9.63  9.65  9.51   9.58      9.58  46687029  600000.SS
+        8  2020-10-21  9.58  9.70  9.51   9.70      9.70  61622129  600000.SS
+
+    params = {
+        "bullish_hammer_params": {
+            "hammer_params": {"t1": 1,
+                              "t3": 2,
+                              "small_body": 0.05},
+            "key": "low",
+            "abs_slope": 0.25,
+            "enhanced": True,
+        },
+        "ref_size": 5,
+        }
     """
-    scan_date = price_df.iloc[-1]["date"]
-    stock_code = price_df.iloc[-1]["ticker"]
+    price_df = price_df.sort_values(by="date", axis='index', ascending=True) \
+        .reset_index().drop(labels="index", axis="columns")
+
+    # By default, it scans the last candlestick in the price_df.
+    if not date:
+        date_index = len(price_df) - 1
+        date = price_df.iloc[date_index]["date"]
+    else:
+        date_index = price_df.index[price_df["date"] == date][0]
+
     ref_size = params["ref_size"]
-    candlestick = price_df.iloc[-1].to_dict()
+    stock_code = price_df.iloc[date_index]["ticker"]
 
     pattern = None
-    if len(price_df) - 1 < ref_size:
-        print("{stock_code} does not have {ref_size} ref candlesticks".format(ref_size=ref_size, stock_code=stock_code))
+    if date_index < ref_size:
+        print("{stock_code} does not have {ref_size} ref candlesticks."
+              .format(ref_size=ref_size, stock_code=stock_code))
     else:
-        ref_candlesticks = price_df.iloc[-ref_size - 1:-1].to_dict(orient="records")
+        candlestick = price_df.iloc[date_index].to_dict()
+        ref_candlesticks = price_df.iloc[date_index - ref_size:date_index].to_dict(orient="records")
 
         if is_bullish_hammer(candlestick, ref_candlesticks, params["bullish_hammer_params"]):
-            print("A bullish hammer is found for {stock} on {day}".format(stock=stock_code, day=scan_date))
-            pattern = {"date": scan_date, "stock_code": stock_code, "pattern": "bullish_hammer"}
+            print("A bullish hammer is found for {stock} on {day}".format(stock=stock_code, day=date))
+            pattern = {"date": date, "stock_code": stock_code, "pattern": "bullish_hammer"}
 
     return pattern
 
@@ -95,18 +117,18 @@ def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path=
 
 
 if __name__ == "__main__":
-    get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
+    # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
 
     hs_params = {
         "bullish_hammer_params": {
-            "hammer_params": {"t1": 3,
-                              "t3": 4,
-                              "small_body": 0.05},
+            "hammer_params": {"t1": 1,
+                              "t3": 2,
+                              "small_body": 0.1},
             "key": "low",
-            "abs_slope": 0.25,
+            "abs_slope": 0.05,
             "enhanced": True,
         },
-        "ref_size": 5,
+        "ref_size": 6,
     }
 
     hs_patterns = scan_patterns(params=hs_params,
@@ -118,24 +140,24 @@ if __name__ == "__main__":
         index=False,
         header=True)
 
-    get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
-
-    asx_params = {
-        "bullish_hammer_params": {
-            "hammer_params": {"t1": 1,
-                              "t3": 2,
-                              "small_body": 0.1},
-            "key": "low",
-            "abs_slope": 0.02,
-            "enhanced": True,
-        },
-        "ref_size": 5,
-    }
-    asx_patterns = scan_patterns(params=asx_params,
-                                 watchlist="data/candlestick/asx_watchlist",
-                                 stock_path="data/candlestick/stock")
-
-    pd.DataFrame(asx_patterns).to_csv("data/candlestick/results/asx_stock_patterns_{today}.csv".format(
-        today=datetime.today().strftime("%Y%m%d")),
-        index=False,
-        header=True)
+    # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
+    #
+    # asx_params = {
+    #     "bullish_hammer_params": {
+    #         "hammer_params": {"t1": 1,
+    #                           "t3": 2,
+    #                           "small_body": 0.1},
+    #         "key": "low",
+    #         "abs_slope": 0.02,
+    #         "enhanced": True,
+    #     },
+    #     "ref_size": 5,
+    # }
+    # asx_patterns = scan_patterns(params=asx_params,
+    #                              watchlist="data/candlestick/asx_watchlist",
+    #                              stock_path="data/candlestick/stock")
+    #
+    # pd.DataFrame(asx_patterns).to_csv("data/candlestick/results/asx_stock_patterns_{today}.csv".format(
+    #     today=datetime.today().strftime("%Y%m%d")),
+    #     index=False,
+    #     header=True)
