@@ -28,7 +28,7 @@ def debug(window_df):
         plot_candlestick(pd.DataFrame(candlesticks))
 
 
-def evaluate_any_higher_price(windows, key="close", a_share=False):
+def evaluate_any_higher_price1(windows, key="close", a_share=False):
     """"
         Each window is a dict of date, his_candlesticks, cur_candlestick, fut_candlesticks.
 
@@ -64,6 +64,58 @@ def evaluate_any_higher_price(windows, key="close", a_share=False):
     return windows_df
 
 
+# params = {"date": "2020-10-10", "fut_size": 3, "key": "close", "a_share": False}
+# result = {}
+def evaluate_higher_price(price_df, params):
+    """"
+        It evaluates if there is any price of [c1, c2, ..., c_fut_size] (by default close price) higher than price of
+        c0. If yes, it indicates "success"; otherwise "failure".
+    """
+    price_df = price_df.sort_values(by="date", axis='index', ascending=True) \
+        .reset_index().drop(labels="index", axis="columns")
+
+    date = params["date"]
+    # By default, it evaluates the first candlestick in the price_df.
+    if not date:
+        date_index = 0
+        date = price_df.iloc[date_index]["date"]
+    else:
+        date_index = price_df.index[price_df["date"] == date]
+        if len(date_index) > 0:
+            date_index = date_index[0]
+        else:
+            return None
+
+    fut_size = params["fut_size"]
+    stock_code = price_df.iloc[date_index]["ticker"]
+
+    if date_index + fut_size > len(price_df):
+        print("{stock_code} does not have {fut_size} future candlesticks."
+              .format(fut_size=fut_size, stock_code=stock_code))
+        return None
+
+    key = params["key"]
+    a_share = params["a_share"]
+
+    price = price_df.iloc[date_index]["close"]
+    if a_share:
+        fut_prices = price_df.iloc[date_index + 1:date_index + fut_size - 1][key]
+    else:
+        fut_prices = price_df.iloc[date_index:date_index + fut_size][key]
+
+    max_fut_price = fut_prices.max()
+
+    result = params
+    # Number of trade days that a higher price occurs.
+    result["bullish_days"] = fut_prices.ge(price).sum()
+    # Highest price.
+    result["highest_price"] = max_fut_price
+    # Highest percentage.
+    result["highest_percent"] = round(max_fut_price / price - 1, 3)
+
+    return result
+
+
 def evaluate_bullish_trend(windows, key="close", print_detail=True):
     pass
 
@@ -91,26 +143,19 @@ def evaluate_signal_confidence(stock_code, params, eval_signal, stock_path="data
     windows = eval_signal_func(price_df, **params)
 
 
-def evaluate_hammer_signal(price_df, his_size, fut_size, abs_slope, t1, t3, small_body, enhanced):
+def evaluate_hammer_signal(price_df, params):
     """
         Evaluate how a stock performs historically against hammer_signal.
     """
 
     n = len(price_df)
     windows = list()
-    for t in range(his_size, n - fut_size):
-        ref_candlesticks = price_df.iloc[t - his_size: t].to_dict(orient="records")
+    for t in range(params["ref_size"], n - params["fut_size"]):
+        ref_candlesticks = price_df.iloc[t - params["ref_size"]: t].to_dict(orient="records")
         candlestick = price_df.iloc[t].to_dict()
-        fut_candlesticks = price_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
+        fut_candlesticks = price_df.iloc[t + 1: t + params["fut_size"] + 1].to_dict(orient="records")
 
-        is_hammer_params = {
-            "candlestick": candlestick,
-            "t1": t1,
-            "t3": t3,
-            "small_body": small_body
-        }
-
-        if is_bullish_hammer(is_hammer_params, ref_candlesticks, abs_slope, enhanced):
+        if is_bullish_hammer(candlestick, ref_candlesticks, params["bullish_hammer_params"]):
             signal = True
         else:
             signal = False
