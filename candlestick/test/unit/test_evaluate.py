@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from candlestick.evaluate import evaluate_any_higher_price
+from candlestick.evaluate import evaluate_higher_price
 
 
 class TestEvaluate(unittest.TestCase):
@@ -98,7 +98,7 @@ class TestEvaluate(unittest.TestCase):
                   'key': 'high',
                   'a_share': True, }
 
-        result = evaluate_any_higher_price(price_df, params)
+        result = evaluate_higher_price(price_df, params)
         print(result)
         self.assertIsNotNone(result)
 

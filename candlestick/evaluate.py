@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from candlestick.core.pattern import is_bullish_hammer, is_bullish_inverted_hammer
+from candlestick.core.trend import is_bullish_or_bearish_trend
 
 
 def plot_candlestick(price_df):
@@ -99,24 +100,24 @@ def evaluate_higher_price(price_df, params):
 
     price = price_df.iloc[date_index]["close"]
     if a_share:
-        fut_prices = price_df.iloc[date_index + 1:date_index + fut_size - 1][key]
+        fut_price_df = price_df.iloc[date_index + 1:date_index + fut_size - 1]
     else:
-        fut_prices = price_df.iloc[date_index:date_index + fut_size][key]
+        fut_price_df = price_df.iloc[date_index:date_index + fut_size]
 
-    max_fut_price = fut_prices.max()
-
+    max_fut_price = round(fut_price_df[key].max(), 3)
     result = params
     # Number of trade days that a higher price occurs.
-    result["bullish_days"] = fut_prices.ge(price).sum()
+    result["bullish_days"] = fut_price_df[key].ge(price).sum()
     # Highest price.
     result["highest_price"] = max_fut_price
     # Highest percentage.
     result["highest_percent"] = round(max_fut_price / price - 1, 3)
-
+    # Bullish/bearish trend
+    result["bullish_trend"] = is_bullish_or_bearish_trend(fut_price_df.to_dict(orient="records"), key=key)
     return result
 
 
-def evaluate_bullish_trend(windows, key="close", print_detail=True):
+def evaluate_bullish_trend(price_df, params):
     pass
 
 
