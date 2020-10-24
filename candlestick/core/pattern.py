@@ -245,32 +245,27 @@ def is_shaven_bottom(candlestick):
     pass
 
 
-def is_bullish_hammer(candlestick, ref_candlesticks, params):
+def is_bullish_hammer(candlestick, ref_candlesticks, hammer_params, market_top_or_bottom_params, enhanced):
     """
         Hammer candlesticks form when a security moves significantly lower after the open, but rallies to close well
         above the intraday low. The resulting candlestick looks like a square lollipop with a long stick. If this
         candlestick forms during a decline, then it is called a Hammer.
 
-    :param candlestick:                 A candlestick.
-    :param ref_candlesticks:            Historical candlesticks (e.g., previous 3 - 5 trade days).
-    :param params:                      {
-                                            "hammer_params": {"t1": , "t3": , "small_body": },
-                                            "key": the price key (e.g., "low") employed to fit downtrend line.
-                                            "abs_slope": the slope of the fitted downtrend line, \
-                                            "enhanced": True/False If enhanced, the candlestick itself must be bullish.
-                                        }
-
-    :return:                            True / False
+    :param candlestick:                     The candlestick to be scanned.
+    :param ref_candlesticks:                Historical candlesticks (e.g., previous 3 - 5 trade days).
+    :param hammer_params:                   A dict of t1, t3 and small_body.
+    :param market_top_or_bottom_params:     A dict of key and abs_slope.
+    :param enhanced:                        True/False If enhanced, the candlestick itself must be bullish.
+    :return:                                True/False.
     """
 
     c1 = is_market_top_or_bottom(candlestick=candlestick,
                                  ref_candlesticks=ref_candlesticks,
-                                 key=params["key"],
-                                 abs_slope=params["abs_slope"]) == "bottom"
+                                 **market_top_or_bottom_params) == "bottom"
 
-    c2 = is_hammer(candlestick, **params["hammer_params"])
+    c2 = is_hammer(candlestick, **hammer_params)
 
-    if not params["enhanced"]:
+    if not enhanced:
         if c1 and c2:
             return True
     else:

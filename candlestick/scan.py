@@ -35,7 +35,7 @@ def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path
         export_stock_info_df_to_csv(dfs, path=stock_path)
 
 
-def scan_bullish_hammer(price_df, params):
+def scan_bullish_hammer(price_df, date, ref_size, hammer_params, market_top_or_bottom_params, enhanced):
     """
     price_df =
             date  open  high   low  close  adjclose    volume     ticker
@@ -49,23 +49,11 @@ def scan_bullish_hammer(price_df, params):
         7  2020-10-20  9.63  9.65  9.51   9.58      9.58  46687029  600000.SS
         8  2020-10-21  9.58  9.70  9.51   9.70      9.70  61622129  600000.SS
 
-    params = {
-        "bullish_hammer_params": {
-            "hammer_params": {"t1": 1,
-                              "t3": 2,
-                              "small_body": 0.05},
-            "key": "low",
-            "abs_slope": 0.25,
-            "enhanced": True,
-        },
-        "ref_size": 5,
-        }
     """
+    # Ensure the price_df is sorted in ascending order according to date.
     price_df = price_df.sort_values(by="date", axis='index', ascending=True) \
         .reset_index().drop(labels="index", axis="columns")
 
-    date = params["date"]
-    # By default, it scans the last candlestick in the price_df.
     if not date:
         date_index = len(price_df) - 1
         date = price_df.iloc[date_index]["date"]
@@ -76,7 +64,6 @@ def scan_bullish_hammer(price_df, params):
         else:
             return None
 
-    ref_size = params["ref_size"]
     stock_code = price_df.iloc[date_index]["ticker"]
 
     if date_index < ref_size:
@@ -87,7 +74,7 @@ def scan_bullish_hammer(price_df, params):
     candlestick = price_df.iloc[date_index].to_dict()
     ref_candlesticks = price_df.iloc[date_index - ref_size:date_index].to_dict(orient="records")
 
-    if is_bullish_hammer(candlestick, ref_candlesticks, params["bullish_hammer_params"]):
+    if is_bullish_hammer(candlestick, ref_candlesticks, hammer_params, market_top_or_bottom_params, enhanced):
         print("A bullish hammer is found for {stock} on {day}".format(stock=stock_code, day=date))
         pattern = {"date": date, "stock_code": stock_code, "pattern": "bullish_hammer"}
         return pattern
@@ -115,7 +102,13 @@ def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path=
             print("{stock} does not have data.".format(stock=stock_code))
             continue
 
-        pattern = scan_bullish_hammer(price_df, params)
+        date = params["date"]
+        ref_size = params["ref_size"]
+        hammer_param = params["hammer_params"]
+        market_top_or_bottom_params = params["market_top_or_bottom_params"]
+        enhanced = params["enhanced"]
+
+        pattern = scan_bullish_hammer(price_df, date, ref_size, hammer_param, market_top_or_bottom_params, enhanced)
         if pattern:
             patterns.append(pattern)
 
@@ -127,39 +120,40 @@ if __name__ == "__main__":
     # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
 
     hs_params = {
-        "bullish_hammer_params": {
-            "hammer_params": {"t1": 1,
-                              "t3": 2,
-                              "small_body": 0.1},
-            "key": "low",
-            "abs_slope": 0.05,
-            "enhanced": True,
-        },
+        "hammer_params": {"t1": 1,
+                          "t3": 2,
+                          "small_body": 0.1},
+        "market_top_or_bottom_params": {"key": "low",
+                                        "abs_slope": 0.05},
+
+        "enhanced": True,
+
         "ref_size": 5,
-        "date": "2020-10-20"
+        "date": "2020-10-23"
     }
 
     hs_patterns = scan_patterns(params=hs_params,
                                 watchlist="data/candlestick/hs_watchlist",
                                 stock_path="data/candlestick/stock")
 
-    # pd.DataFrame(hs_patterns).to_csv("data/candlestick/results/hs_stock_patterns_{today}.csv".format(
-    #     today=datetime.today().strftime("%Y%m%d")),
-    #     index=False,
-    #     header=True)
+    pd.DataFrame(hs_patterns).to_csv("data/candlestick/results/hs_stock_patterns_{today}.csv".format(
+        today=datetime.today().strftime("%Y%m%d")),
+        index=False,
+        header=True)
 
     # asx_params = {
-    #     "bullish_hammer_params": {
-    #         "hammer_params": {"t1": 1,
-    #                           "t3": 2,
-    #                           "small_body": 0.1},
-    #         "key": "low",
-    #         "abs_slope": 0.02,
-    #         "enhanced": True,
-    #     },
+    #     "hammer_params": {"t1": 1,
+    #                       "t3": 2,
+    #                       "small_body": 0.1},
+    #     "market_top_or_bottom_params": {"key": "low",
+    #                                     "abs_slope": 0.02},
+    #
+    #     "enhanced": True,
+    #
     #     "ref_size": 5,
-    #     "date": None
+    #     "date": "2020-10-23"
     # }
+    #
     # asx_patterns = scan_patterns(params=asx_params,
     #                              watchlist="data/candlestick/asx_watchlist",
     #                              stock_path="data/candlestick/stock")
