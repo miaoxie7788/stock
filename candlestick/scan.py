@@ -35,9 +35,10 @@ def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path
         export_stock_info_df_to_csv(dfs, path=stock_path)
 
 
-def scan_bullish_hammer(price_df, date, ref_size, hammer_params, market_top_or_bottom_params, enhanced):
+def scan_bullish_hammer(price_df, date_or_index, ref_size, hammer_params, market_top_or_bottom_params, enhanced):
     """
-    price_df =
+        Scan whether the trade day (given by date) is a bullish hammer, according to historical ref_size trade days.
+
             date  open  high   low  close  adjclose    volume     ticker
         0  2020-10-09  9.44  9.48  9.40   9.42      9.42  39772687  600000.SS
         1  2020-10-12  9.45  9.63  9.42   9.59      9.59  66671637  600000.SS
@@ -54,25 +55,32 @@ def scan_bullish_hammer(price_df, date, ref_size, hammer_params, market_top_or_b
     price_df = price_df.sort_values(by="date", axis='index', ascending=True) \
         .reset_index().drop(labels="index", axis="columns")
 
-    if not date:
-        date_index = len(price_df) - 1
-        date = price_df.iloc[date_index]["date"]
-    else:
-        date_index = price_df.index[price_df["date"] == date]
-        if len(date_index) > 0:
-            date_index = date_index[0]
-        else:
-            return None
+    # By default, it scans the last candlestick in the price_df.
+    index = len(price_df) - 1
+    if date_or_index:
+        # Index.
+        if type(date_or_index) == int:
+            index = date_or_index
+            if index < 0 or index > len(price_df) - 1:
+                return None
+        # Date.
+        if type(date_or_index) == str:
+            index = price_df.index[price_df["date"] == date_or_index]
+            if len(index) > 0:
+                index = index[0]
+            else:
+                return None
 
-    stock_code = price_df.iloc[date_index]["ticker"]
+    date = price_df.iloc[index]["date"]
+    stock_code = price_df.iloc[index]["ticker"]
 
-    if date_index < ref_size:
+    if index < ref_size:
         print("{stock_code} does not have {ref_size} ref candlesticks."
               .format(ref_size=ref_size, stock_code=stock_code))
         return None
 
-    candlestick = price_df.iloc[date_index].to_dict()
-    ref_candlesticks = price_df.iloc[date_index - ref_size:date_index].to_dict(orient="records")
+    candlestick = price_df.iloc[index].to_dict()
+    ref_candlesticks = price_df.iloc[index - ref_size:index].to_dict(orient="records")
 
     if is_bullish_hammer(candlestick, ref_candlesticks, hammer_params, market_top_or_bottom_params, enhanced):
         print("A bullish hammer is found for {stock} on {day}".format(stock=stock_code, day=date))
@@ -102,13 +110,14 @@ def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path=
             print("{stock} does not have data.".format(stock=stock_code))
             continue
 
-        date = params["date"]
+        date_or_index = params["date_or_index"]
         ref_size = params["ref_size"]
         hammer_param = params["hammer_params"]
         market_top_or_bottom_params = params["market_top_or_bottom_params"]
         enhanced = params["enhanced"]
 
-        pattern = scan_bullish_hammer(price_df, date, ref_size, hammer_param, market_top_or_bottom_params, enhanced)
+        pattern = scan_bullish_hammer(price_df, date_or_index, ref_size, hammer_param, market_top_or_bottom_params,
+                                      enhanced)
         if pattern:
             patterns.append(pattern)
 
@@ -129,7 +138,7 @@ if __name__ == "__main__":
         "enhanced": True,
 
         "ref_size": 5,
-        "date": "2020-10-23"
+        "date_or_index": None
     }
 
     hs_patterns = scan_patterns(params=hs_params,
@@ -151,7 +160,7 @@ if __name__ == "__main__":
     #     "enhanced": True,
     #
     #     "ref_size": 5,
-    #     "date": "2020-10-23"
+    #     "date_or_index": "2020-10-23"
     # }
     #
     # asx_patterns = scan_patterns(params=asx_params,
