@@ -29,8 +29,8 @@ def plot_candlestick(price_df):
 # evaluate functions.
 def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
     """"
-        Evaluate whether there is any higher price than the trade day, according to future fut_size trade days. Key
-        can be high, low, open or close.
+        Evaluate whether there is any price higher than the trade day given by date_or_index, according to future
+        fut_size trade days. Key can be high, low, open or close.
 
         {"date": "2020-10-10", "fut_size": 3, "key": "close", "a_share": False}
 
@@ -67,11 +67,12 @@ def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
               .format(fut_size=fut_size, stock_code=stock_code))
         return None
 
-    price = price_df.iloc[index]["close"]
+    # price = price_df.iloc[index]["close"]
+    price = price_df.iloc[index][key]
     if a_share:
-        fut_price_df = price_df.iloc[index + 1:index + fut_size - 1]
+        fut_price_df = price_df.iloc[index + 2:index + fut_size + 1]
     else:
-        fut_price_df = price_df.iloc[index:index + fut_size]
+        fut_price_df = price_df.iloc[index + 1:index + fut_size + 1]
 
     max_fut_price = round(fut_price_df[key].max(), 3)
     result = {
@@ -121,7 +122,7 @@ def evaluate_higher_price_and_bullish_hammer_stock(price_df, bullish_hammer_para
 
     result = {
         "stock_code": result_df.iloc[0]["stock_code"],
-        "trade_days": n - fut_size - ref_size,
+        "trade_days": len(result_df),
         "any_higher": round((result_df["highest_percent"] > 0).value_counts()[True] / len(result_df), 3),
         "bullish_trend": round(result_df["bullish_trend"].value_counts()["bullish"] / len(result_df), 3),
         "highest_percent_avg": round(result_df["highest_percent"].mean(), 3),
