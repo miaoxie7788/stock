@@ -1,10 +1,10 @@
 import pandas as pd
 import plotly.graph_objects as go
 
-from candlestick.core.pattern import is_bullish_hammer, is_bullish_inverted_hammer
 from candlestick.core.trend import is_bullish_or_bearish_trend
 
 
+# util functions.
 def plot_candlestick(price_df):
     fig = go.Figure(data=[go.Candlestick(
         x=price_df['date'],
@@ -25,42 +25,7 @@ def debug(window_df):
         plot_candlestick(pd.DataFrame(candlesticks))
 
 
-# def evaluate_any_higher_price1(windows, key="close", a_share=False):
-#     """"
-#         Each window is a dict of date, his_candlesticks, cur_candlestick, fut_candlesticks.
-#
-#         E.g., his_size = 3, fut_size = 2, cur_candlestick = c0
-#         c-3, c-2, c-1, c0, c1, c2
-#
-#         It evaluates if there is any price of [c1, c2] (by default close price) higher than price of c0. If yes,
-#         it indicates "success"; otherwise "failure".
-#     """
-#
-#     def any_higher_price(row):
-#
-#         # HS stock is T+1.
-#         if a_share:
-#             fut_candlesticks = row["fut"][1:]
-#             cut_price = row["cur"][key]
-#         # ASX stock is T+0.
-#         else:
-#             fut_candlesticks = row["fut"]
-#             cut_price = row["cur"][key]
-#
-#         fut_prices = [candlestick[key] for candlestick in fut_candlesticks if not np.isnan(candlestick[key])]
-#         if fut_prices:
-#             max_fut_price = max(fut_prices)
-#         else:
-#             max_fut_price = 0
-#
-#         return round(max_fut_price / cut_price - 1, 3)
-#
-#     windows_df = pd.DataFrame(windows)
-#     windows_df["higher_fut_price"] = windows_df.apply(any_higher_price, axis="columns")
-#
-#     return windows_df
-
-
+# evaluate functions.
 def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
     """"
         Evaluate whether there is any higher price than the trade day, according to future fut_size trade days. Key
@@ -69,10 +34,11 @@ def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
         {"date": "2020-10-10", "fut_size": 3, "key": "close", "a_share": False}
 
         # bullish_days:             number of future trade days those have a higher price.
-        # highest price:            highest price occurred in future trade days.
-        # highest growth:           highest growth rate.
-        # bullish trend:            whether a bullish tread is present in future trade days.
+        # highest_price:            highest price occurred in future trade days.
+        # highest_growth:           highest growth rate.
+        # bullish_trend:            whether a bullish tread is present in future trade days.
     """
+    # Ensure the price_df is sorted in ascending order according to date.
     price_df = price_df.sort_values(by="date", axis='index', ascending=True) \
         .reset_index().drop(labels="index", axis="columns")
 
@@ -107,41 +73,66 @@ def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
         fut_price_df = price_df.iloc[index:index + fut_size]
 
     max_fut_price = round(fut_price_df[key].max(), 3)
-    result = {"stock_code": stock_code, "date": date, "fut_size": fut_size, "key": key, "a_share": a_share,
-              "bullish_days": fut_price_df[key].ge(price).sum(),
-              "bullish_trend": is_bullish_or_bearish_trend(fut_price_df.to_dict(orient="records"), key=key),
-              "highest_price": max_fut_price,
-              "highest_percent": round(max_fut_price / price - 1, 3),
-              }
+    result = {
+        "stock_code": stock_code,
+        "date": date,
+        "fut_size": fut_size,
+        "key": key,
+        "a_share": a_share,
+        "bullish_days": fut_price_df[key].ge(price).sum(),
+        "bullish_trend": is_bullish_or_bearish_trend(fut_price_df.to_dict(orient="records"), key=key),
+        "highest_price": max_fut_price,
+        "highest_percent": round(max_fut_price / price - 1, 3),
+    }
 
     return result
 
 
-def evaluate_bullish_trend(price_df, params):
+def evaluate_bullish_trend(price_df, date_or_index, fut_size, key, a_share):
     pass
 
 
-def evaluate_hammer_signal(price_df, params):
-    """
-        Evaluate how a stock performs historically against hammer_signal.
-    """
+def evaluate_higher_price_all(price_df, fut_size, key, a_share):
+    """"
+        Evaluate all the dates/indexes across the price_df using evaluate_higher_price.
+        Key can be high, low, open or close.
 
+        {"fut_size": 3, "key": "close", "a_share": False}
+
+    """
     n = len(price_df)
-    windows = list()
-    for t in range(params["ref_size"], n - params["fut_size"]):
-        ref_candlesticks = price_df.iloc[t - params["ref_size"]: t].to_dict(orient="records")
-        candlestick = price_df.iloc[t].to_dict()
-        fut_candlesticks = price_df.iloc[t + 1: t + params["fut_size"] + 1].to_dict(orient="records")
+    result_df = pd.DataFrame([evaluate_higher_price(price_df, t, fut_size, key, a_share) for t in range(n - fut_size)])
 
-        if is_bullish_hammer(candlestick, ref_candlesticks, params["bullish_hammer_params"]):
-            signal = True
-        else:
-            signal = False
+    print(result_df)
+    result = {
+        "stock_code": result_df.iloc[0]["stock_code"],
+        "fut_size": result_df.iloc[0]["fut_size"],
+        "key": result_df.iloc[0]["key"],
+        "a_share": result_df.iloc[0]["a_share"],
+        "trade_days": n - fut_size,
+        "profitable_trade_days": ((result_df["highest_percent"] > 0) &
+                                  (result_df["bullish_trend"] == "bullish")).value_counts()[True],
+        "bullish_days_ratio": round(result_df["bullish_days"].mean() / result_df.iloc[0]["fut_size"], 3),
+        "bullish_trend_ratio": round(result_df["bullish_trend"].value_counts()["bullish"] / n, 3),
+        "highest_percent_avg": round(result_df["highest_percent"].mean(), 3)
+    }
 
-        window = {"date": candlestick["date"], "cur": candlestick, "his": ref_candlesticks,
-                  "fut": fut_candlesticks, "is_hammer_signal": signal}
+    return result
 
-        windows.append(window)
+
+# TODO: it will be changed to support multiple scan funcs. 25/10/2020 MX
+def evaluate_stock(price_df, scan_func, scan_func_params, eval_func, eval_func_params):
+    """
+        Evaluate how a stock performs against a candlestick pattern.
+
+        scan_func_params:  ref_size, hammer_params, market_top_or_bottom_params, enhance
+    """
+    n = len(price_df)
+    is_patterns = [scan_func(price_df, t, **scan_func_params) for t in range(n)]
+    eval_results = [eval_func(price_df, t, **eval_func_params) for t in range(n)]
+
+    print(is_patterns)
+    print(eval_results)
 
     # windows_df = evaluate_any_higher_price(windows, key="high", a_share=True)
     # windows_df0 = windows_df.loc[windows_df["is_hammer_signal"]]
@@ -169,28 +160,4 @@ def evaluate_hammer_signal(price_df, params):
     #     "method": "any_higher_high_price",
     #     **params_dict
     # }
-    return windows
-
-
-def evaluate_inverted_hammer_signal(price_df, his_size, fut_size, abs_slope, t1, t3, small_body, enhanced):
-    """
-        Scan inverted_hammer signals in each window across the price_df.
-    """
-    n = len(price_df)
-    windows = list()
-    for t in range(his_size, n - fut_size):
-        his_candlesticks = price_df.iloc[t - his_size: t].to_dict(orient="records")
-        cur_candlestick = price_df.iloc[t].to_dict()
-        fut_candlesticks = price_df.iloc[t + 1: t + fut_size + 1].to_dict(orient="records")
-
-        if is_bullish_inverted_hammer(cur_candlestick, his_candlesticks, abs_slope, t1, t3, small_body, enhanced):
-            signal = True
-        else:
-            signal = False
-
-        window = {"date": cur_candlestick["date"], "cur": cur_candlestick, "his": his_candlesticks,
-                  "fut": fut_candlesticks, "is_inverted_hammer_signal": signal}
-
-        windows.append(window)
-
-    return windows
+    # return windows
