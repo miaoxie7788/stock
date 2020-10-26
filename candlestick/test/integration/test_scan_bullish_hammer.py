@@ -1,60 +1,104 @@
-import os
-
 import pandas as pd
 
 pd.set_option('display.max_columns', None)
 
-# def test_stock(stock_code, stock_params, path="data/asx_stock/"):
-#     # print("Testing {stock_code}".format(stock_code=stock_code))
-#
-#     code, market = stock_code.split(".")
-#     filename_regex = "{market}_{code}_{date_type}_{start_date}_{end_date}.csv".format(
-#         market=market,
-#         code=code,
-#         date_type="price",
-#         start_date=r"\d{8}",
-#         end_date=r"\d{8}")
-#
-#     filenames = os.listdir(path)
-#     price_filename = os.path.join(path,
-#                                   [filename for filename in filenames if re.match(filename_regex, filename)][0])
-#
-#     price_df = pd.read_csv(price_filename)
-#
-#     windows = evaluate_bullish_hammer(price_df, **stock_params)
-#
-#     windows_df = evaluate_any_higher_price(windows, key="high", a_share=True)
-#     windows_df0 = windows_df.loc[windows_df["is_hammer_signal"]]
-#
-#     n = len(windows_df)
-#     n0 = len(windows_df0)
-#
-#     rate = len(windows_df[windows_df["higher_fut_price"] >= 0]) / n
-#     if n0 == 0:
-#         rate0 = 0
-#     else:
-#         rate0 = len(windows_df0[windows_df0["higher_fut_price"] >= 0]) / n0
-#
-#     # scale: billion
-#     trade_scale = round(price_df.apply(lambda row: row["volume"] * row["close"], axis="columns").mean() / 1000000000, 3)
-#
-#     result = {
-#         "stock_code": stock_code,
-#         "trade_scale": trade_scale,
-#         "trade_days": n,
-#         "n_hammer_signal": n0,
-#         "benchmark_success_rate": round(rate, 3),
-#         "success_rate": round(rate0, 3),
-#         "improvement": round(rate0 / rate - 1, 3),
-#         "method": "any_higher_high_price",
-#         **stock_params
-#     }
-#
-#     print(result)
-#     print(windows_df0[["date", "higher_fut_price"]])
-#     debug(windows_df0)
-#
-#     return result
+
+def evaluate_higher_price_and_bullish_hammer(price_df, date_or_index, bullish_hammer_params, higher_price_params):
+    bullish_hammer_pattern = scan_bullish_hammer(price_df, date_or_index, **bullish_hammer_params)
+    result = evaluate_higher_price(price_df, date_or_index, **higher_price_params)
+    if bullish_hammer_pattern:
+        result["is_bullish_hammer"] = True
+    else:
+        result["is_bullish_hammer"] = False
+
+    return result
+
+
+def evaluate_higher_price_and_bullish_hammer_stock(price_df, bullish_hammer_params, higher_price_params):
+    """"
+        Evaluate all the dates/indexes across the price_df for a stock using evaluate_higher_price against
+        bullish_hammer.
+    """
+    n = len(price_df)
+    ref_size = bullish_hammer_params["ref_size"]
+    fut_size = higher_price_params["fut_size"]
+    result_df = pd.DataFrame([evaluate_higher_price_and_bullish_hammer(price_df, t,
+                                                                       higher_price_params=higher_price_params,
+                                                                       bullish_hammer_params=bullish_hammer_params)
+                              for t in range(ref_size, n - fut_size)])
+
+    bullish_hammer_df = result_df[result_df["is_bullish_hammer"]]
+
+    result = {
+        "stock_code": result_df.iloc[0]["stock_code"],
+        "trade_days": len(result_df),
+        "any_higher": round((result_df["highest_percent"] > 0).value_counts()[True] / len(result_df), 3),
+        "bullish_trend": round(result_df["bullish_trend"].value_counts()["bullish"] / len(result_df), 3),
+        "highest_percent_avg": round(result_df["highest_percent"].mean(), 3),
+        "bullish_hammer_trade_days": len(bullish_hammer_df),
+        "bullish_hammer_any_higher": round(
+            (bullish_hammer_df["highest_percent"] > 0).value_counts()[True] / len(bullish_hammer_df), 3),
+        "bullish_hammer_bullish_trend": round(
+            bullish_hammer_df["bullish_trend"].value_counts()["bullish"] / len(bullish_hammer_df), 3),
+        "bullish_hammer_highest_percent_avg": round(bullish_hammer_df["highest_percent"].mean(), 3),
+        "bullish_hammer_params": bullish_hammer_params,
+        "higher_price_params": higher_price_params,
+    }
+
+    return result
+
+
+def test_evaluate_higher_price_against_bullish_hammer(self):
+    bullish_hammer_params = {
+        "hammer_params": {
+            "t1": 1,
+            "t3": 2,
+            "small_body": 0.1},
+        "market_top_or_bottom_params": {
+            "key": "low",
+            "abs_slope": 0.05},
+        "enhanced": True,
+        "ref_size": 5,
+    }
+
+    higher_price_params = {
+        'fut_size': 3,
+        'a_share': False,
+        'key': 'high',
+    }
+
+    result = evaluate_higher_price_and_bullish_hammer(price_df,
+                                                      "2006-05-26",
+                                                      bullish_hammer_params=bullish_hammer_params,
+                                                      higher_price_params=higher_price_params)
+    # print(result)
+    self.assertIsInstance(result, dict)
+
+
+def test_evaluate_stock_against_bullish_hammer(self):
+    bullish_hammer_params = {
+        "hammer_params": {
+            "t1": 1,
+            "t3": 2,
+            "small_body": 0.1},
+        "market_top_or_bottom_params": {
+            "key": "low",
+            "abs_slope": 0.02},
+        "enhanced": True,
+        "ref_size": 5,
+    }
+
+    higher_price_params = {
+        'fut_size': 2,
+        'a_share': False,
+        'key': 'high',
+    }
+
+    result = evaluate_higher_price_and_bullish_hammer_stock(price_df,
+                                                            bullish_hammer_params=bullish_hammer_params,
+                                                            higher_price_params=higher_price_params)
+    print(result)
+    self.assertIsInstance(result, dict)
 
 
 if __name__ == "__main__":
