@@ -1,8 +1,6 @@
-import pandas as pd
 import plotly.graph_objects as go
 
 from candlestick.core.trend import is_bullish_or_bearish_trend
-from candlestick.scan import scan_bullish_hammer
 
 
 # util functions.
@@ -67,6 +65,7 @@ def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
               .format(fut_size=fut_size, stock_code=stock_code))
         return None
 
+    # TODO: decide to use "close" or key as default price of the first trade day. 26/10/2020
     # price = price_df.iloc[index]["close"]
     price = price_df.iloc[index][key]
     if a_share:
@@ -76,11 +75,8 @@ def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
 
     max_fut_price = round(fut_price_df[key].max(), 3)
     result = {
-        "stock_code": stock_code,
         "date": date,
-        "fut_size": fut_size,
-        "key": key,
-        "a_share": a_share,
+        "stock_code": stock_code,
         "bullish_days": fut_price_df[key].ge(price).sum(),
         "bullish_trend": is_bullish_or_bearish_trend(fut_price_df.to_dict(orient="records"), key=key),
         "highest_price": max_fut_price,
@@ -92,48 +88,3 @@ def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
 
 def evaluate_bullish_trend(price_df, date_or_index, fut_size, key, a_share):
     pass
-
-
-def evaluate_higher_price_and_bullish_hammer(price_df, date_or_index, bullish_hammer_params, higher_price_params):
-    bullish_hammer_pattern = scan_bullish_hammer(price_df, date_or_index, **bullish_hammer_params)
-    result = evaluate_higher_price(price_df, date_or_index, **higher_price_params)
-    if bullish_hammer_pattern:
-        result["is_bullish_hammer"] = True
-    else:
-        result["is_bullish_hammer"] = False
-
-    return result
-
-
-def evaluate_higher_price_and_bullish_hammer_stock(price_df, bullish_hammer_params, higher_price_params):
-    """"
-        Evaluate all the dates/indexes across the price_df for a stock using evaluate_higher_price against
-        bullish_hammer.
-    """
-    n = len(price_df)
-    ref_size = bullish_hammer_params["ref_size"]
-    fut_size = higher_price_params["fut_size"]
-    result_df = pd.DataFrame([evaluate_higher_price_and_bullish_hammer(price_df, t,
-                                                                       higher_price_params=higher_price_params,
-                                                                       bullish_hammer_params=bullish_hammer_params)
-                              for t in range(ref_size, n - fut_size)])
-
-    bullish_hammer_df = result_df[result_df["is_bullish_hammer"]]
-
-    result = {
-        "stock_code": result_df.iloc[0]["stock_code"],
-        "trade_days": len(result_df),
-        "any_higher": round((result_df["highest_percent"] > 0).value_counts()[True] / len(result_df), 3),
-        "bullish_trend": round(result_df["bullish_trend"].value_counts()["bullish"] / len(result_df), 3),
-        "highest_percent_avg": round(result_df["highest_percent"].mean(), 3),
-        "bullish_hammer_trade_days": len(bullish_hammer_df),
-        "bullish_hammer_any_higher": round(
-            (bullish_hammer_df["highest_percent"] > 0).value_counts()[True] / len(bullish_hammer_df), 3),
-        "bullish_hammer_bullish_trend": round(
-            bullish_hammer_df["bullish_trend"].value_counts()["bullish"] / len(bullish_hammer_df), 3),
-        "bullish_hammer_highest_percent_avg": round(bullish_hammer_df["highest_percent"].mean(), 3),
-        "bullish_hammer_params": bullish_hammer_params,
-        "higher_price_params": higher_price_params,
-    }
-
-    return result

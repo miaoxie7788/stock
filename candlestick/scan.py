@@ -128,12 +128,34 @@ if __name__ == "__main__":
     # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
     # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
 
-    hs_params = {
+    # hs_params = {
+    #     "hammer_params": {"t1": 1,
+    #                       "t3": 2,
+    #                       "small_body": 0.1},
+    #     "market_top_or_bottom_params": {"key": "low",
+    #                                     "abs_slope": 0.05},
+    #
+    #     "enhanced": True,
+    #
+    #     "ref_size": 5,
+    #     "date_or_index": None
+    # }
+    #
+    # hs_patterns = scan_patterns(params=hs_params,
+    #                             watchlist="data/candlestick/hs_watchlist",
+    #                             stock_path="data/candlestick/stock")
+    #
+    # pd.DataFrame(hs_patterns).to_csv("data/candlestick/results/hs_stock_patterns_{today}.csv".format(
+    #     today=datetime.today().strftime("%Y%m%d")),
+    #     index=False,
+    #     header=True)
+
+    asx_params = {
         "hammer_params": {"t1": 1,
                           "t3": 2,
                           "small_body": 0.1},
         "market_top_or_bottom_params": {"key": "low",
-                                        "abs_slope": 0.05},
+                                        "abs_slope": 0.02},
 
         "enhanced": True,
 
@@ -141,33 +163,11 @@ if __name__ == "__main__":
         "date_or_index": None
     }
 
-    hs_patterns = scan_patterns(params=hs_params,
-                                watchlist="data/candlestick/hs_watchlist",
-                                stock_path="data/candlestick/stock")
+    asx_patterns = scan_patterns(params=asx_params,
+                                 watchlist="data/candlestick/asx_watchlist",
+                                 stock_path="data/candlestick/stock")
 
-    pd.DataFrame(hs_patterns).to_csv("data/candlestick/results/hs_stock_patterns_{today}.csv".format(
+    pd.DataFrame(asx_patterns).to_csv("data/candlestick/results/asx_stock_patterns_{today}.csv".format(
         today=datetime.today().strftime("%Y%m%d")),
         index=False,
         header=True)
-
-    # asx_params = {
-    #     "hammer_params": {"t1": 1,
-    #                       "t3": 2,
-    #                       "small_body": 0.1},
-    #     "market_top_or_bottom_params": {"key": "low",
-    #                                     "abs_slope": 0.02},
-    #
-    #     "enhanced": True,
-    #
-    #     "ref_size": 5,
-    #     "date_or_index": "2020-10-23"
-    # }
-    #
-    # asx_patterns = scan_patterns(params=asx_params,
-    #                              watchlist="data/candlestick/asx_watchlist",
-    #                              stock_path="data/candlestick/stock")
-    #
-    # pd.DataFrame(asx_patterns).to_csv("data/candlestick/results/asx_stock_patterns_{today}.csv".format(
-    #     today=datetime.today().strftime("%Y%m%d")),
-    #     index=False,
-    #     header=True)
