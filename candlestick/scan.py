@@ -126,7 +126,7 @@ def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path=
 
 if __name__ == "__main__":
     # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
-    # get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
+    get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
 
     # hs_params = {
     #     "hammer_params": {"t1": 1,
