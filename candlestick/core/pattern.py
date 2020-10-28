@@ -245,22 +245,25 @@ def is_shaven_bottom(candlestick):
     pass
 
 
-def is_bullish_hammer(is_hammer_params, ref_candlesticks, abs_slope, enhanced=False):
+def is_bullish_hammer(candlestick, ref_candlesticks, hammer_params, market_top_or_bottom_params, enhanced):
     """
         Hammer candlesticks form when a security moves significantly lower after the open, but rallies to close well
         above the intraday low. The resulting candlestick looks like a square lollipop with a long stick. If this
         candlestick forms during a decline, then it is called a Hammer.
 
-    :param is_hammer_params:            A dict of candlestick, t1, t3 and small_body.
-    :param ref_candlesticks:            Historical candlesticks.
-    :param abs_slope:                   The absolute slope of the fitted downtrend line.
-    :param enhanced:                    If enhanced, the candlestick itself must be bullish.
-    :return:                            True / False
+    :param candlestick:                     The candlestick to be scanned.
+    :param ref_candlesticks:                Historical candlesticks (e.g., previous 3 - 5 trade days).
+    :param hammer_params:                   A dict of t1, t3 and small_body.
+    :param market_top_or_bottom_params:     A dict of key and abs_slope.
+    :param enhanced:                        True/False If enhanced, the candlestick itself must be bullish.
+    :return:                                True/False.
     """
 
-    candlestick = is_hammer_params["candlestick"]
-    c1 = is_market_top_or_bottom(candlestick, ref_candlesticks, "low", abs_slope) == "bottom"
-    c2 = is_hammer(**is_hammer_params)
+    c1 = is_market_top_or_bottom(candlestick=candlestick,
+                                 ref_candlesticks=ref_candlesticks,
+                                 **market_top_or_bottom_params) == "bottom"
+
+    c2 = is_hammer(candlestick, **hammer_params)
 
     if not enhanced:
         if c1 and c2:
