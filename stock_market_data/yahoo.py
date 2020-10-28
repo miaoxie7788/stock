@@ -19,7 +19,7 @@ def export_stock_info_df_to_csv(stock_info_df_dict, path="data"):
         df.to_csv(os.path.join(path, name), index=False, header=True)
 
 
-def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=None, full_csv_filename=True):
+def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=None):
     """
         Get historical price, dividend and splits data for a stock between start_date and end_date.
 
@@ -27,9 +27,7 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
     :param data_types:              ["price", "dividend", "splits"]
     :param start_date:              start date, datetime
     :param end_date:                end date, datetime
-    :param full_csv_filename:       full_csv_filename: {market}_{code}_{date_type}_{start_date}_{end_date}.csv
-                                    short_csv_filename: {market}_{code}_{date_type}.csv
-    :return:                        stock_info_df_dict: {csv_filename: df}
+    :return:                        stock_info_df_dict: {csv_filename: df}, csv_filename: {market}_{code}_{date_type}.csv
     """
 
     # Get historical data.
@@ -54,16 +52,10 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
 
             # Split a stock_code into code and market, e.g, car.ax -> car, ax.
             code, market = stock_code.split(".")
-            name = "{market}_{code}_{date_type}".format(
+            name = "{market}_{code}_{date_type}.csv".format(
                 market=market,
                 code=code,
                 date_type=data_type)
-            if full_csv_filename:
-                name += "_{start_date}_{end_date}.csv".format(
-                    start_date=start_date.strftime("%Y%m%d"),
-                    end_date=end_date.strftime("%Y%m%d"))
-            else:
-                name += ".csv"
 
             stock_info_df_dict[name] = df
 
@@ -87,16 +79,16 @@ if __name__ == "__main__":
     with open("data/hs_stock_codes") as f:
         hs_stock_codes = [stock.strip() for stock in f.readlines()]
 
-    hs_path = "data/stock"
+    hs_path = "data/stock_20201028"
     for hs_stock_code in hs_stock_codes:
         dfs = get_stock_historical_data(stock_code=hs_stock_code, data_types=["price"])
         export_stock_info_df_to_csv(dfs, hs_path)
 
     # Get ASX stock historical data.
-    with open("data/asx_200_stock_codes") as f:
+    with open("data/asx_stock_codes") as f:
         asx_stock_codes = [stock.strip() for stock in f.readlines()]
 
-    asx_path = "data/stock"
+    asx_path = "data/stock_20201028"
     for asx_stock_code in asx_stock_codes:
         dfs = get_stock_historical_data(stock_code=asx_stock_code, data_types=["price"])
         export_stock_info_df_to_csv(dfs, asx_path)
