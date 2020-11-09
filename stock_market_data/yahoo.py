@@ -19,7 +19,7 @@ def export_stock_info_df_to_csv(stock_info_df_dict, path="data"):
         df.to_csv(os.path.join(path, name), index=False, header=True)
 
 
-def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=None):
+def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=None, interval="1d"):
     """
         Get historical price, dividend and splits data for a stock between start_date and end_date.
 
@@ -27,6 +27,7 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
     :param data_types:              ["price", "dividend", "splits"]
     :param start_date:              start date, datetime
     :param end_date:                end date, datetime
+    :param interval:                "1d", "1wk" or "1mo"
     :return:                        stock_info_df_dict: {csv_filename: df}, csv_filename: {market}_{code}_{date_type}.csv
     """
 
@@ -41,10 +42,17 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
     for data_type in data_types:
         stock_info_func = stock_info_func_dict[data_type]
         try:
-            df = stock_info_func(ticker=stock_code,
-                                 start_date=start_date,
-                                 end_date=end_date,
-                                 index_as_date=False)
+            if data_type == "price":
+                df = stock_info_func(ticker=stock_code,
+                                     start_date=start_date,
+                                     end_date=end_date,
+                                     index_as_date=False,
+                                     interval=interval)
+            else:
+                df = stock_info_func(ticker=stock_code,
+                                     start_date=start_date,
+                                     end_date=end_date,
+                                     index_as_date=False)
 
             # Get start_date and end_date.
             start_date = df["date"].min()
