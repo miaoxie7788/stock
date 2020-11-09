@@ -30,7 +30,7 @@ def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path
                                         data_types=["price"],
                                         start_date=start_date,
                                         end_date=end_date,
-                                        full_csv_filename=False)
+                                        interval="1d")
 
         export_stock_info_df_to_csv(dfs, path=stock_path)
 
