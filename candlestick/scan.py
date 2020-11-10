@@ -11,7 +11,7 @@ from candlestick.core.pattern import is_bullish_hammer
 from stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
-def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path="data/candlestick/stock"):
+def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path="data/3w_stock"):
     """
         Get historical data for stocks presented in the watchlist between today and today-last_days.
         Note, last_days should be larger than his_size.
@@ -90,7 +90,7 @@ def scan_bullish_hammer(price_df, date_or_index, ref_size, hammer_params, market
     return None
 
 
-def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path="data/candlestick/stock"):
+def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path="data/3w_stock"):
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
@@ -125,8 +125,8 @@ def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path=
 
 
 if __name__ == "__main__":
-    # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/candlestick/stock")
-    get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/candlestick/stock")
+    # get_data(watchlist="data/candlestick/hs_watchlist", last_days=14, stock_path="data/3w_stock")
+    get_data(watchlist="data/candlestick/asx_watchlist", last_days=14, stock_path="data/3w_stock")
 
     # hs_params = {
     #     "hammer_params": {"t1": 1,
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     asx_patterns = scan_patterns(params=asx_params,
                                  watchlist="data/candlestick/asx_watchlist",
-                                 stock_path="data/candlestick/stock")
+                                 stock_path="data/3w_stock")
 
     pd.DataFrame(asx_patterns).to_csv("data/candlestick/results/asx_stock_patterns_{today}.csv".format(
         today=datetime.today().strftime("%Y%m%d")),
