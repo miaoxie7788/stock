@@ -18,8 +18,8 @@ def is_bullish_or_bearish_trend(candlesticks, key="close"):
     prices = [candlestick[key] for candlestick in candlesticks if not np.isnan(candlestick[key])]
 
     n = len(prices)
-    if n <= 1:
-        return None, None
+    if n < 2:
+        raise ValueError("There are at least 2 candlesticks to determine a trend.")
 
     x = np.array(range(1, n + 1))
     y = np.array(prices)
