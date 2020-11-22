@@ -6,28 +6,31 @@
 import numpy as np
 
 
-def is_bullish_or_bearish_trend(candlesticks, key="close", abs_slope=0):
+def is_bullish_or_bearish_trend(candlesticks, key="close"):
     """
         A couple of consecutive daily/weekly/monthly prices (by default close prices) are fitted with a 1st order
         linear model y = ax + b. If a > 0, the trend is bullish otherwise bearish.
+
+        :param candlesticks:        A list of candlesticks.
+        :param key:                 "high" | "low" | "open" | "close"
+        :return:                    "bullish" | "bearish", degree
     """
     prices = [candlestick[key] for candlestick in candlesticks if not np.isnan(candlestick[key])]
 
     n = len(prices)
     if n <= 1:
-        return None
+        return None, None
 
     x = np.array(range(1, n + 1))
     y = np.array(prices)
 
     slope, _ = list(np.polyfit(x, y, 1))
-    if slope > abs_slope:
-        return "bullish"
+    degree = np.degrees(np.arctan(slope))
 
-    if slope < 0 and abs(slope) > abs_slope:
-        return "bearish"
+    if degree > 0:
+        return "bullish", degree
 
-    return None
+    return "bearish", degree
 
 
 def is_market_top_or_bottom(candlestick, ref_candlesticks, key="low", abs_slope=0):
