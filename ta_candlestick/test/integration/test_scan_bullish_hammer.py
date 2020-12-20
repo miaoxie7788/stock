@@ -6,8 +6,8 @@ import os
 
 import pandas as pd
 
-from candlestick.evaluate import evaluate_higher_price
-from candlestick.scan import scan_bullish_hammer
+from ta_candlestick.evaluate import evaluate_higher_price
+from ta_candlestick.scan import scan_bullish_hammer
 
 pd.set_option('display.max_columns', None)
 
