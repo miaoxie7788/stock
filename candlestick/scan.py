@@ -132,8 +132,7 @@ if __name__ == "__main__":
         "hammer_params": {"t1": 1,
                           "t3": 2,
                           "small_body": 0.1},
-        "market_top_or_bottom_params": {"key": "low",
-                                        "abs_slope": 0.02},
+        "market_top_or_bottom_params": {"key": "low"},
 
         "enhanced": True,
 
