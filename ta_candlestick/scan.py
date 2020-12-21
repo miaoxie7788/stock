@@ -144,7 +144,7 @@ if __name__ == "__main__":
                                  watchlist="data/stock_codes/stock_code_list_asx_200",
                                  stock_path="data/1d_stock")
 
-    pd.DataFrame(asx_patterns).to_csv("data/results/ta_candlestick/asx_stock_patterns_{today}.csv".format(
+    pd.DataFrame(asx_patterns).to_csv("data/results/candlestick/asx_stock_patterns_{today}.csv".format(
         today=datetime.today().strftime("%Y%m%d")),
         index=False,
         header=True)
