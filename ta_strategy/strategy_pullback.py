@@ -9,8 +9,8 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 
-from candlestick.core.trend import is_bullish_or_bearish_trend
-from stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
+from ta_candlestick.core.trend import is_bullish_or_bearish_trend
+from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
 def is_break_bollinger_bands(candlesticks, key="close"):

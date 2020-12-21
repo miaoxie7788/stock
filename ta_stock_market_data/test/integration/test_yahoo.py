@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
+from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 if __name__ == "__main__":
     stock_code = "tls.ax"

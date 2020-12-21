@@ -1,5 +1,5 @@
 """
-    Scan candlestick patterns.
+    Scan ta_candlestick patterns.
 """
 
 import os
@@ -7,11 +7,11 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from candlestick.core.pattern import is_bullish_hammer
-from stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
+from ta_candlestick.core.pattern import is_bullish_hammer
+from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
-def get_data(last_days=21, watchlist="data/candlestick/hs_watchlist", stock_path="data/3w_stock"):
+def get_data(last_days=21, watchlist="data/ta_candlestick/hs_watchlist", stock_path="data/3w_stock"):
     """
         Get historical data for stocks presented in the watchlist between today and today-last_days.
         Note, last_days should be larger than his_size.
@@ -55,7 +55,7 @@ def scan_bullish_hammer(price_df, date_or_index, ref_size, hammer_params, market
     price_df = price_df.sort_values(by="date", axis='index', ascending=True) \
         .reset_index().drop(labels="index", axis="columns")
 
-    # By default, it scans the last candlestick in the price_df.
+    # By default, it scans the last ta_candlestick in the price_df.
     index = len(price_df) - 1
     if date_or_index:
         # Index.
@@ -90,7 +90,7 @@ def scan_bullish_hammer(price_df, date_or_index, ref_size, hammer_params, market
     return None
 
 
-def scan_patterns(params, watchlist="data/candlestick/hs_watchlist", stock_path="data/3w_stock"):
+def scan_patterns(params, watchlist="data/ta_candlestick/hs_watchlist", stock_path="data/3w_stock"):
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 

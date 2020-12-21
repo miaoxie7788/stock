@@ -11,14 +11,14 @@
         https://stockcharts.com/
 """
 
-from candlestick.core.trend import is_market_top_or_bottom
+from ta_candlestick.core.trend import is_market_top_or_bottom
 
 
 def extract_candlestick(candlestick):
     """
-        Extract prices and price differences from a bullish or bearish candlestick.
+        Extract prices and price differences from a bullish or bearish ta_candlestick.
 
-        candlestick = {"open": y1, "close": y2, "high": y3, "low": y4}
+        ta_candlestick = {"open": y1, "close": y2, "high": y3, "low": y4}
     """
     y1, y2, y3, y4 = candlestick['open'], candlestick['close'], candlestick['high'], candlestick['low']
 
@@ -141,7 +141,7 @@ def is_gravestone_doji(candlestick, long_upper_shadow=0.05):
 
 def is_hammer(candlestick, t1=10, t3=3, small_body=0.05):
     """
-        A black or a white candlestick that consists of a small body near the high with a little or no upper shadow and
+        A black or a white ta_candlestick that consists of a small body near the high with a little or no upper shadow and
         a long lower tail. Considered a bullish pattern during a downtrend.
     """
     y1, y2, _, _, d1, d2, d3 = extract_candlestick(candlestick)
@@ -158,7 +158,7 @@ def is_hammer(candlestick, t1=10, t3=3, small_body=0.05):
 
 def is_inverted_hammer(candlestick, t1=3, t3=10, small_body=0.05):
     """
-        A black or a white candlestick in an upside-down hammer position.
+        A black or a white ta_candlestick in an upside-down hammer position.
     """
     y1, y2, _, _, d1, d2, d3 = extract_candlestick(candlestick)
 
@@ -174,7 +174,7 @@ def is_inverted_hammer(candlestick, t1=3, t3=10, small_body=0.05):
 
 def is_hanging_man(candlestick, t1=10, small_body=0.01):
     """
-        A black or a white candlestick that consists of a small body near the high with a little or no
+        A black or a white ta_candlestick that consists of a small body near the high with a little or no
         upper shadow and a long lower tail. The lower tail should be two or three times the height of the body.
         Considered a bearish pattern during an uptrend.
     """
@@ -193,7 +193,7 @@ def is_hanging_man(candlestick, t1=10, small_body=0.01):
 
 def is_shooting_star(candlestick):
     """
-        A black or a white candlestick that has a small body, a long upper shadow and a little or no lower tail.
+        A black or a white ta_candlestick that has a small body, a long upper shadow and a little or no lower tail.
         Considered a bearish pattern in an uptrend.
     """
     pass
@@ -201,23 +201,23 @@ def is_shooting_star(candlestick):
 
 def is_long_upper_shadow(candlestick):
     """
-        A black or a white candlestick with an upper shadow that has a length of 2/3 or more of the total range of
-        the candlestick. Normally considered a bearish signal when it appears around price resistance levels.
+        A black or a white ta_candlestick with an upper shadow that has a length of 2/3 or more of the total range of
+        the ta_candlestick. Normally considered a bearish signal when it appears around price resistance levels.
     """
     pass
 
 
 def is_long_lower_shadow(candlestick):
     """
-        A black or a white candlestick is formed with a lower tail that has a length of 2/3 or more of the total
-        range of the candlestick. Normally considered a bullish signal when it appears around price support levels
+        A black or a white ta_candlestick is formed with a lower tail that has a length of 2/3 or more of the total
+        range of the ta_candlestick. Normally considered a bullish signal when it appears around price support levels
     """
     pass
 
 
 def is_marubozu(candlestick):
     """
-        A long or a normal candlestick (black or white) with no shadow or tail. The high and the lows represent the
+        A long or a normal ta_candlestick (black or white) with no shadow or tail. The high and the lows represent the
         opening and the closing prices. Considered a continuation pattern.
     """
     pass
@@ -225,7 +225,7 @@ def is_marubozu(candlestick):
 
 def is_spinning_top(candlestick):
     """
-        A black or a white candlestick with a small body. The size of shadows can vary. Interpreted as a neutral
+        A black or a white ta_candlestick with a small body. The size of shadows can vary. Interpreted as a neutral
         pattern but gains importance when it is part of other formations.
     """
     pass
@@ -233,14 +233,14 @@ def is_spinning_top(candlestick):
 
 def is_shaven_head(candlestick):
     """
-        A black or a white candlestick with no upper shadow. [Compared with hammer.]
+        A black or a white ta_candlestick with no upper shadow. [Compared with hammer.]
     """
     pass
 
 
 def is_shaven_bottom(candlestick):
     """
-        A black or a white candlestick with no lower tail. [Compare with Inverted Hammer.]
+        A black or a white ta_candlestick with no lower tail. [Compare with Inverted Hammer.]
     """
     pass
 
@@ -248,14 +248,14 @@ def is_shaven_bottom(candlestick):
 def is_bullish_hammer(candlestick, ref_candlesticks, hammer_params, market_top_or_bottom_params, enhanced):
     """
         Hammer candlesticks form when a security moves significantly lower after the open, but rallies to close well
-        above the intraday low. The resulting candlestick looks like a square lollipop with a long stick. If this
-        candlestick forms during a decline, then it is called a Hammer.
+        above the intraday low. The resulting ta_candlestick looks like a square lollipop with a long stick. If this
+        ta_candlestick forms during a decline, then it is called a Hammer.
 
-    :param candlestick:                     The candlestick to be scanned.
+    :param candlestick:                     The ta_candlestick to be scanned.
     :param ref_candlesticks:                Historical candlesticks (e.g., previous 3 - 5 trade days).
     :param hammer_params:                   A dict of t1, t3 and small_body.
     :param market_top_or_bottom_params:     A dict of key and abs_slope.
-    :param enhanced:                        True/False If enhanced, the candlestick itself must be bullish.
+    :param enhanced:                        True/False If enhanced, the ta_candlestick itself must be bullish.
     :return:                                True/False.
     """
 

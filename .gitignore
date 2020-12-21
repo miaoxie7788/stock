@@ -113,5 +113,5 @@ venv.bak/
 /data
 
 # test
-#/technical_analysis/test
-#/stock_market_data/test
+#/ta_candlestick/test
+#/ta_stock_market_data/test

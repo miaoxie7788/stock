@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 
-from candlestick.core.trend import is_bullish_or_bearish_trend
+from ta_candlestick.core.trend import is_bullish_or_bearish_trend
 
 
 # util functions.
@@ -41,7 +41,7 @@ def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
     price_df = price_df.sort_values(by="date", axis='index', ascending=True) \
         .reset_index().drop(labels="index", axis="columns")
 
-    # By default, it evaluates the first candlestick in the price_df.
+    # By default, it evaluates the first ta_candlestick in the price_df.
     index = 0
     if date_or_index:
         # Index.
