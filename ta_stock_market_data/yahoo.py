@@ -28,7 +28,8 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
     :param start_date:              start date, datetime
     :param end_date:                end date, datetime
     :param interval:                "1d", "1wk" or "1mo"
-    :return:                        stock_info_df_dict: {csv_filename: df}, csv_filename: {market}_{code}_{date_type}.csv
+    :return:                        stock_info_df_dict: {csv_filename: df},
+                                    sv_filename: {market}_{code}_{date_type}.csv
     """
 
     # Get historical data.
