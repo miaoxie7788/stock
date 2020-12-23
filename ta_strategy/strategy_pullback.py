@@ -1,16 +1,62 @@
 """
-    Strategy 1.
-
+    1) moderately bullish in past 12 months
+    2) moderately bullish in past 3 months (12 weeks)
+    3) break lower bollinger band
+    4) rsi <= 35
+    5) hammer/reverse_hammer candlestick
+    6) declining volume trend
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 
 from ta_candlestick.core.trend import is_bullish_or_bearish_trend
 from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
+
+
+def get_data(watchlist, path="data"):
+    """
+        Get historical price data for stocks presented in the watchlist.
+    """
+
+    # Read watchlist.
+    with open(watchlist) as f:
+        stock_codes = [line.strip() for line in f.readlines()]
+
+    today = datetime.today()
+
+    # Get historical price data for stocks.
+    for stock_code in stock_codes:
+        # 12 months data
+        month_dfs = get_stock_historical_data(stock_code=stock_code,
+                                              data_types=["price"],
+                                              start_date=today - relativedelta(months=12),
+                                              end_date=today,
+                                              interval="1mo")
+
+        export_stock_info_df_to_csv(month_dfs, path=os.path.join(path, "stock_12m"))
+
+        # 3 months (12 weeks) data
+        week_dfs = get_stock_historical_data(stock_code=stock_code,
+                                             data_types=["price"],
+                                             start_date=today - relativedelta(weeks=12),
+                                             end_date=today,
+                                             interval="1wk")
+
+        export_stock_info_df_to_csv(week_dfs, path=os.path.join(path, "stock_12w"))
+
+        # 3 week (21 days) data
+        day_dfs = get_stock_historical_data(stock_code=stock_code,
+                                            data_types=["price"],
+                                            start_date=today - relativedelta(days=21),
+                                            end_date=today,
+                                            interval="1d")
+
+        export_stock_info_df_to_csv(day_dfs, path=os.path.join(path, "stock_21d"))
 
 
 def is_break_bollinger_bands(candlesticks, key="close"):
@@ -22,43 +68,6 @@ def is_break_bollinger_bands(candlesticks, key="close"):
         return True
 
     return False
-
-
-def get_data(watchlist, path="data"):
-    """
-        Get 12 months and 12 weeks historical price data for stocks presented in the watchlist.
-    """
-
-    # Read watchlist.
-    with open(watchlist) as f:
-        stock_codes = [line.strip() for line in f.readlines()]
-
-    today = datetime.today()
-
-    for stock_code in stock_codes:
-        month_dfs = get_stock_historical_data(stock_code=stock_code,
-                                              data_types=["price"],
-                                              start_date=today - timedelta(days=365 * 2),
-                                              end_date=today + timedelta(days=1),
-                                              interval="1mo")
-
-        export_stock_info_df_to_csv(month_dfs, path=os.path.join(path, "stock_1m"))
-
-        week_dfs = get_stock_historical_data(stock_code=stock_code,
-                                             data_types=["price"],
-                                             start_date=today - timedelta(weeks=12),
-                                             end_date=today + timedelta(days=1),
-                                             interval="1wk")
-
-        export_stock_info_df_to_csv(week_dfs, path=os.path.join(path, "stock_1w"))
-
-        day_dfs = get_stock_historical_data(stock_code=stock_code,
-                                            data_types=["price"],
-                                            start_date=today - timedelta(days=28),
-                                            end_date=today + timedelta(days=1),
-                                            interval="1d")
-
-        export_stock_info_df_to_csv(day_dfs, path=os.path.join(path, "stock_1d"))
 
 
 def exec_strategy(watchlist, path="data"):
@@ -111,4 +120,4 @@ def exec_strategy(watchlist, path="data"):
 
 if __name__ == "__main__":
     get_data(watchlist="data/stock_codes/stock_code_list_asx_200")
-    exec_strategy(watchlist="data/stock_codes/stock_code_list_asx_200")
+    # exec_strategy(watchlist="data/stock_codes/stock_code_list_asx_200")
