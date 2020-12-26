@@ -10,8 +10,9 @@
 import os
 from datetime import datetime
 
-import numpy as np
 import pandas as pd
+# noinspection PyUnresolvedReferences
+import pandas_ta as ta
 from dateutil.relativedelta import relativedelta
 
 from ta_candlestick.core.trend import is_bullish_or_bearish_trend
@@ -49,75 +50,98 @@ def get_data(watchlist, path="data"):
 
         export_stock_info_df_to_csv(week_dfs, path=os.path.join(path, "stock_12w"))
 
-        # 3 week (21 days) data
+        # 6 week (42 days) data
         day_dfs = get_stock_historical_data(stock_code=stock_code,
                                             data_types=["price"],
-                                            start_date=today - relativedelta(days=21),
+                                            start_date=today - relativedelta(days=42),
                                             end_date=today,
                                             interval="1d")
 
-        export_stock_info_df_to_csv(day_dfs, path=os.path.join(path, "stock_21d"))
+        export_stock_info_df_to_csv(day_dfs, path=os.path.join(path, "stock_42d"))
 
 
-def is_break_bollinger_bands(candlesticks, key="close"):
-    prices = [candlestick[key] for candlestick in candlesticks[:-1]]
+def stock_market_data_read_csv(stock_code, path, data_type="price"):
+    code, market = stock_code.split(".")
+    # short_csv_filename.
+    csv_filename = "{market}_{code}_{date_type}.csv".format(
+        market=market,
+        code=code,
+        date_type=data_type)
 
-    last_price = candlesticks[-1][key]
+    stock_path = os.path.join(path, csv_filename)
+    try:
+        df = pd.read_csv(stock_path)
+    except FileNotFoundError:
+        df = None
 
-    if last_price < np.mean(prices) - 2 * np.std(prices):
-        return True
-
-    return False
+    return df
 
 
 def exec_strategy(watchlist, path="data"):
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
-    stock_path_1m = os.path.join(path, "stock_1m")
-    stock_path_1w = os.path.join(path, "stock_1w")
-    stock_path_1d = os.path.join(path, "stock_1d")
+    stock_path_12m = os.path.join(path, "stock_12m")
+    stock_path_12w = os.path.join(path, "stock_12w")
+    stock_path_42d = os.path.join(path, "stock_42d")
 
     for stock_code in stock_codes:
-        code, market = stock_code.split(".")
-        # short_csv_filename.
-        name = "{market}_{code}_{date_type}.csv".format(
-            market=market,
-            code=code,
-            date_type="price")
 
-        both_bullish = 0
-
-        for stock_path in [stock_path_1m, stock_path_1w]:
-            filename = os.path.join(stock_path, name)
-            if os.path.exists(filename):
-                price_df = pd.read_csv(filename)
-            else:
-                # print("{stock} does not have data.".format(stock=stock_code))
-                continue
-
-            candlesticks = price_df.iloc[-12:].to_dict(orient="records")
-            _, degree = is_bullish_or_bearish_trend(candlesticks)
-            if 0 <= degree <= 45:
-                both_bullish += 1
-
-        filename = os.path.join(stock_path_1d, name)
-        if os.path.exists(filename):
-            price_df = pd.read_csv(filename)
-        else:
-            # print("{stock} does not have data.".format(stock=stock_code))
+        # condition 1: moderately bullish in past 12 months
+        df = stock_market_data_read_csv(stock_code, stock_path_12m)
+        if df is None:
+            print("{stock} does not have data.".format(stock=stock_code))
             continue
 
-        candlesticks = price_df.to_dict(orient="records")
+        if len(df) > 12:
+            df = df.iloc[-12:]
 
-        break_bollinger = 0
-        if is_break_bollinger_bands(candlesticks):
-            break_bollinger = 1
+        candlesticks = df.to_dict(orient="records")
+        _, degree = is_bullish_or_bearish_trend(candlesticks)
+        if 0 <= degree <= 45:
+            cond1 = True
+        else:
+            cond1 = False
 
-        if break_bollinger == 1 and both_bullish == 2:
+        # condition 2: moderately bullish in past 3 months (12 weeks)
+        df = stock_market_data_read_csv(stock_code, stock_path_12w)
+        if df is None:
+            print("{stock} does not have data.".format(stock=stock_code))
+            continue
+
+        if len(df) > 12:
+            df = df.iloc[-12:]
+
+        candlesticks = df.to_dict(orient="records")
+        _, degree = is_bullish_or_bearish_trend(candlesticks)
+        if 0 <= degree <= 45:
+            cond2 = True
+        else:
+            cond2 = False
+
+        # condition 3: break lower bollinger band
+        df = stock_market_data_read_csv(stock_code, stock_path_42d)
+
+        bbs = df.ta.bbands(length=20, std=2)
+        today_bbl = bbs.iloc[-1].to_list()[0]
+        today_close = df.iloc[-1]["close"]
+        if today_close <= today_bbl:
+            cond3 = True
+        else:
+            cond3 = False
+
+        # condition 4: rsi <= 35
+        rsi = df.ta.rsi(length=14)
+        today_rsi = rsi.iloc[-1]
+        if today_rsi <= 35:
+            cond4 = True
+        else:
+            cond4 = False
+
+        if cond1 and cond2 and (cond3 and cond4):
             print(stock_code)
 
 
 if __name__ == "__main__":
-    get_data(watchlist="data/stock_codes/stock_code_list_asx_200")
-    # exec_strategy(watchlist="data/stock_codes/stock_code_list_asx_200")
+    # get_data(watchlist="data/stock_codes/stock_code_list_asx_200")
+    exec_strategy(watchlist="data/stock_codes/stock_code_list_asx_200")
