@@ -3,8 +3,7 @@
     2) moderately bullish in past 3 months (12 weeks)
     3) break lower bollinger band
     4) rsi <= 35
-    5) hammer/reverse_hammer candlestick
-    6) declining volume trend
+    5) hammer/inverted_hammer candlestick
 """
 
 import os
@@ -15,6 +14,7 @@ import pandas as pd
 import pandas_ta as ta
 from dateutil.relativedelta import relativedelta
 
+from ta_candlestick.core.pattern import is_hammer, is_inverted_hammer
 from ta_candlestick.core.trend import is_bullish_or_bearish_trend
 from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
@@ -23,6 +23,18 @@ def get_data(watchlist, path="data"):
     """
         Get historical price data for stocks presented in the watchlist.
     """
+
+    # stock market: asx or hs
+    if "asx" in watchlist:
+        market = "asx"
+    elif "hs" in watchlist:
+        market = "hs"
+    else:
+        market = ""
+
+    m12_stock_path = os.path.join(path, "{market}_12m".format(market=market))
+    w12_stock_path = os.path.join(path, "{market}_12w".format(market=market))
+    d42_stock_path = os.path.join(path, "{market}_42d".format(market=market))
 
     # Read watchlist.
     with open(watchlist) as f:
@@ -39,7 +51,7 @@ def get_data(watchlist, path="data"):
                                               end_date=today,
                                               interval="1mo")
 
-        export_stock_info_df_to_csv(month_dfs, path=os.path.join(path, "stock_12m"))
+        export_stock_info_df_to_csv(month_dfs, path=m12_stock_path)
 
         # 3 months (12 weeks) data
         week_dfs = get_stock_historical_data(stock_code=stock_code,
@@ -48,7 +60,7 @@ def get_data(watchlist, path="data"):
                                              end_date=today,
                                              interval="1wk")
 
-        export_stock_info_df_to_csv(week_dfs, path=os.path.join(path, "stock_12w"))
+        export_stock_info_df_to_csv(week_dfs, path=w12_stock_path)
 
         # 6 week (42 days) data
         day_dfs = get_stock_historical_data(stock_code=stock_code,
@@ -57,7 +69,7 @@ def get_data(watchlist, path="data"):
                                             end_date=today,
                                             interval="1d")
 
-        export_stock_info_df_to_csv(day_dfs, path=os.path.join(path, "stock_42d"))
+        export_stock_info_df_to_csv(day_dfs, path=d42_stock_path)
 
 
 def stock_market_data_read_csv(stock_code, path, data_type="price"):
@@ -78,17 +90,25 @@ def stock_market_data_read_csv(stock_code, path, data_type="price"):
 
 
 def exec_strategy(watchlist, path="data"):
+    # stock market: asx or hs
+    if "asx" in watchlist:
+        market = "asx"
+    elif "hs" in watchlist:
+        market = "hs"
+    else:
+        market = ""
+
+    m12_stock_path = os.path.join(path, "{market}_12m".format(market=market))
+    w12_stock_path = os.path.join(path, "{market}_12w".format(market=market))
+    d42_stock_path = os.path.join(path, "{market}_42d".format(market=market))
+
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
-
-    stock_path_12m = os.path.join(path, "stock_12m")
-    stock_path_12w = os.path.join(path, "stock_12w")
-    stock_path_42d = os.path.join(path, "stock_42d")
 
     for stock_code in stock_codes:
 
         # condition 1: moderately bullish in past 12 months
-        df = stock_market_data_read_csv(stock_code, stock_path_12m)
+        df = stock_market_data_read_csv(stock_code, m12_stock_path)
         if df is None:
             print("{stock} does not have data.".format(stock=stock_code))
             continue
@@ -104,7 +124,7 @@ def exec_strategy(watchlist, path="data"):
             cond1 = False
 
         # condition 2: moderately bullish in past 3 months (12 weeks)
-        df = stock_market_data_read_csv(stock_code, stock_path_12w)
+        df = stock_market_data_read_csv(stock_code, w12_stock_path)
         if df is None:
             print("{stock} does not have data.".format(stock=stock_code))
             continue
@@ -120,7 +140,7 @@ def exec_strategy(watchlist, path="data"):
             cond2 = False
 
         # condition 3: break lower bollinger band
-        df = stock_market_data_read_csv(stock_code, stock_path_42d)
+        df = stock_market_data_read_csv(stock_code, d42_stock_path)
 
         bbs = df.ta.bbands(length=20, std=2)
         today_bbl = bbs.iloc[-1].to_list()[0]
@@ -133,15 +153,23 @@ def exec_strategy(watchlist, path="data"):
         # condition 4: rsi <= 35
         rsi = df.ta.rsi(length=14)
         today_rsi = rsi.iloc[-1]
-        if today_rsi <= 35:
+        if today_rsi <= 40:
             cond4 = True
         else:
             cond4 = False
 
-        if cond1 and cond2 and (cond3 and cond4):
+        # condition 5: hammer/inverted_hammer candlestick
+        today_candlestick = df.iloc[-1]
+
+        if is_hammer(today_candlestick, 1, 2, 0.1) or is_inverted_hammer(today_candlestick, 2, 1, 0.1):
+            cond5 = True
+        else:
+            cond5 = False
+
+        if (cond1 and cond2) and (cond3 and cond4) and cond5:
             print(stock_code)
 
 
 if __name__ == "__main__":
-    # get_data(watchlist="data/stock_codes/stock_code_list_asx_200")
-    exec_strategy(watchlist="data/stock_codes/stock_code_list_asx_200")
+    # get_data(watchlist="data/stock_codes/asx_200_stock_codes")
+    exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
