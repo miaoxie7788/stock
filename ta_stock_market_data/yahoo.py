@@ -28,7 +28,8 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
     :param start_date:              start date, datetime
     :param end_date:                end date, datetime
     :param interval:                "1d", "1wk" or "1mo"
-    :return:                        stock_info_df_dict: {csv_filename: df}, csv_filename: {market}_{code}_{date_type}.csv
+    :return:                        stock_info_df_dict: {csv_filename: df},
+                                    csv_filename: {market}_{code}_{date_type}.csv
     """
 
     # Get historical data.
@@ -84,7 +85,7 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
 if __name__ == "__main__":
 
     # Get HS stock historical data.
-    with open("data/stock_codes/stock_code_list_hs") as f:
+    with open("data/stock_codes/hs_stock_codes") as f:
         hs_stock_codes = [stock.strip() for stock in f.readlines()]
 
     hs_path = "data/stock"
@@ -93,7 +94,7 @@ if __name__ == "__main__":
         export_stock_info_df_to_csv(dfs, hs_path)
 
     # Get ASX stock historical data.
-    with open("data/stock_codes/stock_code_list_asx") as f:
+    with open("data/stock_codes/asx_stock_codes") as f:
         asx_stock_codes = [stock.strip() for stock in f.readlines()]
 
     asx_path = "data/stock"

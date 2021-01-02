@@ -126,7 +126,7 @@ def scan_patterns(params, watchlist="data/ta_candlestick/hs_watchlist", stock_pa
 
 if __name__ == "__main__":
 
-    get_data(watchlist="data/stock_codes/stock_code_list_asx_200", last_days=21, stock_path="data/1d_stock")
+    get_data(watchlist="data/stock_codes/asx_200_stock_codes", last_days=21, stock_path="data/1d_stock")
 
     asx_params = {
         "hammer_params": {"t1": 1,
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     }
 
     asx_patterns = scan_patterns(params=asx_params,
-                                 watchlist="data/stock_codes/stock_code_list_asx_200",
+                                 watchlist="data/stock_codes/asx_200_stock_codes",
                                  stock_path="data/1d_stock")
 
     pd.DataFrame(asx_patterns).to_csv("data/results/candlestick/asx_stock_patterns_{today}.csv".format(
