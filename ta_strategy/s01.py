@@ -105,8 +105,8 @@ def exec_strategy(watchlist, path="data"):
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
+    results = list()
     for stock_code in stock_codes:
-
         # condition 1: moderately bullish in past 12 months
         df = stock_market_data_read_csv(stock_code, m12_stock_path)
         if df is None:
@@ -168,8 +168,19 @@ def exec_strategy(watchlist, path="data"):
 
         if (cond1 and cond2) and (cond3 and cond4) and cond5:
             print(stock_code)
+            today = df.iloc[-1]["date"]
+            strategy_no = "s01"
+            results.append({"date": today, "strategy": strategy_no, "stock_code": stock_code})
+
+    return results
 
 
 if __name__ == "__main__":
-    # get_data(watchlist="data/stock_codes/asx_200_stock_codes")
-    exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
+    get_data(watchlist="data/stock_codes/asx_200_stock_codes")
+    s01_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
+
+    pd.DataFrame(s01_results).to_csv("data/results/strategy_{no}_{today}.csv".format(
+        no="s01",
+        today=datetime.today().strftime("%Y%m%d")),
+        index=False,
+        header=True)
