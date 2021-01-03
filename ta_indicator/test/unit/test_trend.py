@@ -1,6 +1,6 @@
 import unittest
 
-from ta_candlestick.trend import is_bullish_or_bearish_trend, is_market_top_or_bottom
+from ta_indicator.trend import is_bullish_or_bearish_trend, is_market_top_or_bottom
 
 
 class TestCandlestickPattern(unittest.TestCase):

@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 
-from ta_candlestick.trend import is_bullish_or_bearish_trend
+from ta_indicator.trend import is_bullish_or_bearish_trend
 
 
 # util functions.

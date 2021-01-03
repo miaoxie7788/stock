@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from ta_candlestick.evaluate import evaluate_higher_price
+from ta_strategy.evaluate import evaluate_higher_price
 
 pd.set_option('display.max_columns', None)
 
