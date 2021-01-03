@@ -14,8 +14,8 @@ import pandas as pd
 import pandas_ta as ta
 from dateutil.relativedelta import relativedelta
 
-from ta_candlestick.core.pattern import is_hammer, is_inverted_hammer
-from ta_candlestick.core.trend import is_bullish_or_bearish_trend
+from ta_candlestick.pattern import is_hammer, is_inverted_hammer
+from ta_candlestick.trend import is_bullish_or_bearish_trend
 from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
