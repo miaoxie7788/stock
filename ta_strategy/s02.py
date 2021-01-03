@@ -8,11 +8,12 @@
 import os
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
 from ta_candlestick.pattern import is_bullish_or_bearish_candlestick, is_hammer, is_inverted_hammer
-from ta_indicator.trend import is_bullish_or_bearish_trend
+from ta_indicator.trend import is_upward_or_downward_trend
 from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
@@ -92,7 +93,8 @@ def exec_strategy(watchlist, path="data"):
             df = df.iloc[-7:]
 
         candlesticks = df.to_dict(orient="records")
-        _, degree = is_bullish_or_bearish_trend(candlesticks, key="close")
+        close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
+        _, degree = is_upward_or_downward_trend(close_prices)
         if degree < 0:
             cond1 = True
         else:
@@ -113,8 +115,9 @@ def exec_strategy(watchlist, path="data"):
             cond3 = False
 
         # condition 4: volume presented in a declining trend
-        _, degree = is_bullish_or_bearish_trend(candlesticks, key="volume")
-        if degree < 0:
+        volumes = [candlestick['volume'] for candlestick in candlesticks if not np.isnan(candlestick['volume'])]
+        is_upward_or_downward, _ = is_upward_or_downward_trend(volumes)
+        if is_upward_or_downward == "downward":
             cond4 = True
         else:
             cond4 = False

@@ -9,6 +9,7 @@
 import os
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 # noinspection PyUnresolvedReferences
 import pandas_ta as ta
@@ -117,7 +118,9 @@ def exec_strategy(watchlist, path="data"):
             df = df.iloc[-12:]
 
         candlesticks = df.to_dict(orient="records")
-        _, degree = is_upward_or_downward_trend(candlesticks)
+
+        close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
+        _, degree = is_upward_or_downward_trend(close_prices)
         if 0 <= degree <= 45:
             cond1 = True
         else:
@@ -133,7 +136,8 @@ def exec_strategy(watchlist, path="data"):
             df = df.iloc[-12:]
 
         candlesticks = df.to_dict(orient="records")
-        _, degree = is_upward_or_downward_trend(candlesticks)
+        close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
+        _, degree = is_upward_or_downward_trend(close_prices)
         if 0 <= degree <= 45:
             cond2 = True
         else:
@@ -153,7 +157,7 @@ def exec_strategy(watchlist, path="data"):
         # condition 4: rsi <= 35
         rsi = df.ta.rsi(length=14)
         today_rsi = rsi.iloc[-1]
-        if today_rsi <= 40:
+        if today_rsi <= 35:
             cond4 = True
         else:
             cond4 = False
@@ -166,7 +170,7 @@ def exec_strategy(watchlist, path="data"):
         else:
             cond5 = False
 
-        if (cond1 and cond2) and (cond3 and cond4) and cond5:
+        if (cond1 and cond2) and (cond3 or cond4) and cond5:
             print(stock_code)
             today = df.iloc[-1]["date"]
             strategy_no = "s01"
@@ -176,7 +180,7 @@ def exec_strategy(watchlist, path="data"):
 
 
 if __name__ == "__main__":
-    get_data(watchlist="data/stock_codes/asx_200_stock_codes")
+    # get_data(watchlist="data/stock_codes/asx_200_stock_codes")
     s01_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
 
     pd.DataFrame(s01_results).to_csv("data/results/strategy_{no}_{today}.csv".format(
