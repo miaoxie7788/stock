@@ -122,7 +122,7 @@ def exec_strategy(watchlist, path="data"):
         if cond1 and cond2 and cond3 and cond4:
             print(stock_code)
             today = df.iloc[-1]["date"]
-            strategy_no = "s01"
+            strategy_no = "s02"
             results.append({"date": today, "strategy": strategy_no, "stock_code": stock_code})
 
     return results
