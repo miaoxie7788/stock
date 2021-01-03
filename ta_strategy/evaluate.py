@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 
-from ta_indicator.trend import is_bullish_or_bearish_trend
+from ta_indicator.trend import is_upward_or_downward_trend
 
 
 # util functions.
@@ -78,7 +78,7 @@ def evaluate_higher_price(price_df, date_or_index, fut_size, key, a_share):
         "date": date,
         "stock_code": stock_code,
         "bullish_days": fut_price_df[key].ge(price).sum(),
-        "bullish_trend": is_bullish_or_bearish_trend(fut_price_df.to_dict(orient="records"), key=key),
+        "bullish_trend": is_upward_or_downward_trend(fut_price_df.to_dict(orient="records"), key=key),
         "highest_price": max_fut_price,
         "highest_percent": round(max_fut_price / price - 1, 3),
     }

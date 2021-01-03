@@ -15,7 +15,7 @@ import pandas_ta as ta
 from dateutil.relativedelta import relativedelta
 
 from ta_candlestick.pattern import is_hammer, is_inverted_hammer
-from ta_indicator.trend import is_bullish_or_bearish_trend
+from ta_indicator.trend import is_upward_or_downward_trend
 from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
@@ -117,7 +117,7 @@ def exec_strategy(watchlist, path="data"):
             df = df.iloc[-12:]
 
         candlesticks = df.to_dict(orient="records")
-        _, degree = is_bullish_or_bearish_trend(candlesticks)
+        _, degree = is_upward_or_downward_trend(candlesticks)
         if 0 <= degree <= 45:
             cond1 = True
         else:
@@ -133,7 +133,7 @@ def exec_strategy(watchlist, path="data"):
             df = df.iloc[-12:]
 
         candlesticks = df.to_dict(orient="records")
-        _, degree = is_bullish_or_bearish_trend(candlesticks)
+        _, degree = is_upward_or_downward_trend(candlesticks)
         if 0 <= degree <= 45:
             cond2 = True
         else:
