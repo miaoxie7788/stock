@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from ta_candlestick.core.pattern import is_bullish_hammer
+from ta_candlestick.pattern import is_bullish_hammer
 from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 

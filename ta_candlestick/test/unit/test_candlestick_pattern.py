@@ -1,6 +1,6 @@
 import unittest
 
-from ta_candlestick.core.pattern import is_big_black_candle, is_big_white_candle, is_doji, is_dragonfly_doji, \
+from ta_candlestick.pattern import is_big_black_candle, is_big_white_candle, is_doji, is_dragonfly_doji, \
     is_gravestone_doji, is_hammer, \
     is_inverted_hammer, is_hanging_man
 
