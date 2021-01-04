@@ -132,7 +132,7 @@ def exec_strategy(watchlist, path="data"):
 
 
 if __name__ == "__main__":
-    # get_data(watchlist="data/stock_codes/asx_200_stock_codes")
+    get_data(watchlist="data/stock_codes/asx_200_stock_codes")
     s02_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
 
     pd.DataFrame(s02_results).to_csv("data/results/strategy_{no}_{today}.csv".format(
