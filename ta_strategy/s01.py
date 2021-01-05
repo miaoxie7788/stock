@@ -7,7 +7,7 @@
 """
 
 import os
-from datetime import datetime
+from datetime import date
 
 import numpy as np
 import pandas as pd
@@ -33,44 +33,24 @@ def get_data(watchlist, path="data"):
     else:
         market = ""
 
-    m12_stock_path = os.path.join(path, "{market}_12m".format(market=market))
-    w12_stock_path = os.path.join(path, "{market}_12w".format(market=market))
-    d42_stock_path = os.path.join(path, "{market}_42d".format(market=market))
+    d365_stock_path = os.path.join(path, "{market}_365d".format(market=market))
 
     # Read watchlist.
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
-    today = datetime.today()
+    today = date.today()
 
     # Get historical price data for stocks.
     for stock_code in stock_codes:
-        # 12 months data
-        month_dfs = get_stock_historical_data(stock_code=stock_code,
-                                              data_types=["price"],
-                                              start_date=today - relativedelta(months=12),
-                                              end_date=today,
-                                              interval="1mo")
-
-        export_stock_info_df_to_csv(month_dfs, path=m12_stock_path)
-
-        # 3 months (12 weeks) data
-        week_dfs = get_stock_historical_data(stock_code=stock_code,
-                                             data_types=["price"],
-                                             start_date=today - relativedelta(weeks=12),
-                                             end_date=today,
-                                             interval="1wk")
-
-        export_stock_info_df_to_csv(week_dfs, path=w12_stock_path)
-
-        # 6 week (42 days) data
+        # 1 year (366 days) data
         day_dfs = get_stock_historical_data(stock_code=stock_code,
                                             data_types=["price"],
-                                            start_date=today - relativedelta(days=42),
+                                            start_date=today - relativedelta(days=366),
                                             end_date=today,
                                             interval="1d")
 
-        export_stock_info_df_to_csv(day_dfs, path=d42_stock_path)
+        export_stock_info_df_to_csv(day_dfs, path=d365_stock_path)
 
 
 def stock_market_data_read_csv(stock_code, path, data_type="price"):
@@ -99,26 +79,25 @@ def exec_strategy(watchlist, path="data"):
     else:
         market = ""
 
-    m12_stock_path = os.path.join(path, "{market}_12m".format(market=market))
-    w12_stock_path = os.path.join(path, "{market}_12w".format(market=market))
-    d42_stock_path = os.path.join(path, "{market}_42d".format(market=market))
+    d365_stock_path = os.path.join(path, "{market}_365d".format(market=market))
 
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
     results = list()
     for stock_code in stock_codes:
-        # condition 1: moderately bullish in past 12 months
-        df = stock_market_data_read_csv(stock_code, m12_stock_path)
+        df = stock_market_data_read_csv(stock_code, d365_stock_path)
         if df is None:
             print("{stock} does not have data.".format(stock=stock_code))
             continue
 
-        if len(df) > 12:
-            df = df.iloc[-12:]
+        # condition 1: moderately bullish in past 12 months (53 * 5 = 265 trading days)
+        if len(df) > 265:
+            m12_df = df.iloc[-265:]
+        else:
+            m12_df = df
 
-        candlesticks = df.to_dict(orient="records")
-
+        candlesticks = m12_df.to_dict(orient="records")
         close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
         _, degree = is_upward_or_downward_trend(close_prices)
         if 0 <= degree <= 45:
@@ -126,16 +105,13 @@ def exec_strategy(watchlist, path="data"):
         else:
             cond1 = False
 
-        # condition 2: moderately bullish in past 3 months (12 weeks)
-        df = stock_market_data_read_csv(stock_code, w12_stock_path)
-        if df is None:
-            print("{stock} does not have data.".format(stock=stock_code))
-            continue
+        # condition 2: moderately bullish in past 3 months (12 * 5 = 60 trading days)
+        if len(df) > 60:
+            w12_df = df.iloc[-60:]
+        else:
+            w12_df = df
 
-        if len(df) > 12:
-            df = df.iloc[-12:]
-
-        candlesticks = df.to_dict(orient="records")
+        candlesticks = w12_df.to_dict(orient="records")
         close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
         _, degree = is_upward_or_downward_trend(close_prices)
         if 0 <= degree <= 45:
@@ -143,13 +119,11 @@ def exec_strategy(watchlist, path="data"):
         else:
             cond2 = False
 
-        # condition 3: break lower bollinger band
-        df = stock_market_data_read_csv(stock_code, d42_stock_path)
-
+        # condition 3: break lower bollinger band (low price)
         bbs = df.ta.bbands(length=20, std=2)
         today_bbl = bbs.iloc[-1].to_list()[0]
-        today_close = df.iloc[-1]["close"]
-        if today_close <= today_bbl:
+        today_low = df.iloc[-1]["low"]
+        if today_low <= today_bbl:
             cond3 = True
         else:
             cond3 = False
@@ -170,7 +144,7 @@ def exec_strategy(watchlist, path="data"):
         else:
             cond5 = False
 
-        if (cond1 and cond2) and (cond3 or cond4) and cond5:
+        if (cond1 or cond2) and (cond3 or cond4) and cond5:
             print(stock_code)
             today = df.iloc[-1]["date"]
             strategy_no = "s01"
@@ -185,6 +159,6 @@ if __name__ == "__main__":
 
     pd.DataFrame(s01_results).to_csv("data/results/strategy_{no}_{today}.csv".format(
         no="s01",
-        today=datetime.today().strftime("%Y%m%d")),
+        today=date.today().strftime("%Y%m%d")),
         index=False,
         header=True)
