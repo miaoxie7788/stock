@@ -1,9 +1,11 @@
 """
-    1) moderately bullish in past 12 months
-    2) moderately bullish in past 3 months (12 weeks)
-    3) break lower bollinger band
+    1) moderately bullish in past 12 months (53 weeks * 5 trading days)
+    2) moderately bullish in past 12 weeks (12 weeks * 5 trading days)
+    3) break lower bollinger band (low price)
     4) rsi <= 35
     5) hammer/inverted_hammer candlestick
+
+    (1 or 2) and (3 or 4) and 5
 """
 
 import os
@@ -19,8 +21,10 @@ from ta_candlestick.pattern import is_hammer, is_inverted_hammer
 from ta_indicator.trend import is_upward_or_downward_trend
 from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
+DAYS366 = 366
 
-def get_data(watchlist, path="data"):
+
+def get_stock_market_data(watchlist, path="data"):
     """
         Get historical price data for stocks presented in the watchlist.
     """
@@ -33,8 +37,6 @@ def get_data(watchlist, path="data"):
     else:
         market = ""
 
-    d365_stock_path = os.path.join(path, "{market}_365d".format(market=market))
-
     # Read watchlist.
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
@@ -44,13 +46,18 @@ def get_data(watchlist, path="data"):
     # Get historical price data for stocks.
     for stock_code in stock_codes:
         # 1 year (366 days) data
+        start_date = today - relativedelta(days=DAYS366)
         day_dfs = get_stock_historical_data(stock_code=stock_code,
                                             data_types=["price"],
-                                            start_date=today - relativedelta(days=366),
+                                            start_date=start_date,
                                             end_date=today,
                                             interval="1d")
 
-        export_stock_info_df_to_csv(day_dfs, path=d365_stock_path)
+        stock_market_data_path = os.path.join(path, "{market}_{start_date}_{today}".format(
+            market=market,
+            start_date=str(start_date).replace("-", ""),
+            today=str(today).replace("-", "")))
+        export_stock_info_df_to_csv(day_dfs, path=stock_market_data_path)
 
 
 def stock_market_data_read_csv(stock_code, path, data_type="price"):
@@ -79,14 +86,19 @@ def exec_strategy(watchlist, path="data"):
     else:
         market = ""
 
-    d365_stock_path = os.path.join(path, "{market}_365d".format(market=market))
+    today = date.today()
+    start_date = today - relativedelta(days=DAYS366)
+    stock_market_data_path = os.path.join(path, "{market}_{start_date}_{today}".format(
+        market=market,
+        start_date=str(start_date).replace("-", ""),
+        today=str(today).replace("-", "")))
 
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
     results = list()
     for stock_code in stock_codes:
-        df = stock_market_data_read_csv(stock_code, d365_stock_path)
+        df = stock_market_data_read_csv(stock_code, stock_market_data_path)
         if df is None:
             print("{stock} does not have data.".format(stock=stock_code))
             continue
@@ -154,7 +166,7 @@ def exec_strategy(watchlist, path="data"):
 
 
 if __name__ == "__main__":
-    # get_data(watchlist="data/stock_codes/asx_200_stock_codes")
+    # get_stock_market_data(watchlist="data/stock_codes/asx_200_stock_codes")
     s01_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
 
     pd.DataFrame(s01_results).to_csv("data/results/strategy_{no}_{today}.csv".format(
