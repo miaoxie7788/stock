@@ -7,101 +7,33 @@
 
     (1 or 2) and (3 or 4) and 5
 """
-
-import os
 from datetime import date
 
 import numpy as np
 import pandas as pd
 # noinspection PyUnresolvedReferences
 import pandas_ta as ta
-from dateutil.relativedelta import relativedelta
 
 from ta_candlestick.pattern import is_hammer, is_inverted_hammer
 from ta_indicator.trend import is_upward_or_downward_trend
-from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
+from ta_stock_market_data.yahoo import get_stock_market_data, stock_data_dfs_read_csv
 
-DAYS366 = 366
-
-
-def get_stock_market_data(watchlist, path="data"):
-    """
-        Get historical price data for stocks presented in the watchlist.
-    """
-
-    # stock market: asx or hs
-    if "asx" in watchlist:
-        market = "asx"
-    elif "hs" in watchlist:
-        market = "hs"
-    else:
-        market = ""
-
-    # Read watchlist.
-    with open(watchlist) as f:
-        stock_codes = [line.strip() for line in f.readlines()]
-
-    today = date.today()
-
-    # Get historical price data for stocks.
-    for stock_code in stock_codes:
-        # 1 year (366 days) data
-        start_date = today - relativedelta(days=DAYS366)
-        day_dfs = get_stock_historical_data(stock_code=stock_code,
-                                            data_types=["price"],
-                                            start_date=start_date,
-                                            end_date=today,
-                                            interval="1d")
-
-        stock_market_data_path = os.path.join(path, "{market}_{start_date}_{today}".format(
-            market=market,
-            start_date=str(start_date).replace("-", ""),
-            today=str(today).replace("-", "")))
-        export_stock_info_df_to_csv(day_dfs, path=stock_market_data_path)
+relative_days = 366
 
 
-def stock_market_data_read_csv(stock_code, path, data_type="price"):
-    code, market = stock_code.split(".")
-    # short_csv_filename.
-    csv_filename = "{market}_{code}_{date_type}.csv".format(
-        market=market,
-        code=code,
-        date_type=data_type)
-
-    stock_path = os.path.join(path, csv_filename)
-    try:
-        df = pd.read_csv(stock_path)
-    except FileNotFoundError:
-        df = None
-
-    return df
-
-
-def exec_strategy(watchlist, path="data"):
-    # stock market: asx or hs
-    if "asx" in watchlist:
-        market = "asx"
-    elif "hs" in watchlist:
-        market = "hs"
-    else:
-        market = ""
-
-    today = date.today()
-    start_date = today - relativedelta(days=DAYS366)
-    stock_market_data_path = os.path.join(path, "{market}_{start_date}_{today}".format(
-        market=market,
-        start_date=str(start_date).replace("-", ""),
-        today=str(today).replace("-", "")))
-
+def exec_strategy(watchlist, stock_market_data_path):
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
     results = list()
     for stock_code in stock_codes:
-        df = stock_market_data_read_csv(stock_code, stock_market_data_path)
-        if df is None:
-            print("{stock} does not have data.".format(stock=stock_code))
+        dfs = stock_data_dfs_read_csv(stock_code, stock_market_data_path)
+
+        if "price" not in dfs:
+            print("{stock} does not have price data.".format(stock=stock_code))
             continue
+        else:
+            df = dfs["price"]
 
         # condition 1: moderately bullish in past 12 months (53 * 5 = 265 trading days)
         if len(df) > 265:
@@ -166,8 +98,13 @@ def exec_strategy(watchlist, path="data"):
 
 
 if __name__ == "__main__":
-    # get_stock_market_data(watchlist="data/stock_codes/asx_200_stock_codes")
-    s01_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
+    s01_stock_market_data_path = get_stock_market_data(watchlist="data/stock_codes/asx_200_stock_codes",
+                                                       relative_days=relative_days,
+                                                       data_types=["price"])
+
+    s01_stock_market_data_path = "data/asx_20200110_20210110_1d"
+    s01_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes",
+                                stock_market_data_path=s01_stock_market_data_path)
 
     pd.DataFrame(s01_results).to_csv("data/results/strategy_{no}_{today}.csv".format(
         no="s01",

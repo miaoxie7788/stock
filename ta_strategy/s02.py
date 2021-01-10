@@ -5,90 +5,33 @@
     4) volume presented in a declining trend
 """
 
-import os
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from dateutil.relativedelta import relativedelta
 
 from ta_candlestick.pattern import is_bullish_or_bearish_candlestick, is_hammer, is_inverted_hammer
 from ta_indicator.trend import is_upward_or_downward_trend
-from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
+from ta_stock_market_data.yahoo import get_stock_market_data, stock_data_dfs_read_csv
+
+relative_days = 14
 
 
-def get_data(watchlist, path="data"):
-    """
-        Get historical price data for stocks presented in the watchlist.
-    """
-
-    # stock market: asx or hs
-    if "asx" in watchlist:
-        market = "asx"
-    elif "hs" in watchlist:
-        market = "hs"
-    else:
-        market = ""
-
-    d14_stock_path = os.path.join(path, "{market}_14d".format(market=market))
-
-    # Read watchlist.
-    with open(watchlist) as f:
-        stock_codes = [line.strip() for line in f.readlines()]
-
-    today = datetime.today()
-
-    # Get historical price data for stocks.
-    for stock_code in stock_codes:
-        # 2 week (14 days) data
-        day_dfs = get_stock_historical_data(stock_code=stock_code,
-                                            data_types=["price"],
-                                            start_date=today - relativedelta(days=14),
-                                            end_date=today,
-                                            interval="1d")
-
-        export_stock_info_df_to_csv(day_dfs, path=d14_stock_path)
-
-
-def stock_market_data_read_csv(stock_code, path, data_type="price"):
-    code, market = stock_code.split(".")
-    # short_csv_filename.
-    csv_filename = "{market}_{code}_{date_type}.csv".format(
-        market=market,
-        code=code,
-        date_type=data_type)
-
-    stock_path = os.path.join(path, csv_filename)
-    try:
-        df = pd.read_csv(stock_path)
-    except FileNotFoundError:
-        df = None
-
-    return df
-
-
-def exec_strategy(watchlist, path="data"):
-    # stock market: asx or hs
-    if "asx" in watchlist:
-        market = "asx"
-    elif "hs" in watchlist:
-        market = "hs"
-    else:
-        market = ""
-
-    d14_stock_path = os.path.join(path, "{market}_14d".format(market=market))
-
+def exec_strategy(watchlist, stock_market_data_path):
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
     results = list()
     for stock_code in stock_codes:
-        # condition 1: bearish in past 1 week.
-        df = stock_market_data_read_csv(stock_code, d14_stock_path)
-        if df is None:
-            print("{stock} does not have data.".format(stock=stock_code))
-            continue
+        dfs = stock_data_dfs_read_csv(stock_code, stock_market_data_path)
 
+        if "price" not in dfs:
+            print("{stock} does not have price data.".format(stock=stock_code))
+            continue
+        else:
+            df = dfs["price"]
+
+        # condition 1: bearish in past 1 week.
         if len(df) > 7:
             df = df.iloc[-7:]
 
@@ -132,8 +75,12 @@ def exec_strategy(watchlist, path="data"):
 
 
 if __name__ == "__main__":
-    get_data(watchlist="data/stock_codes/asx_200_stock_codes")
-    s02_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
+    s02_stock_market_data_path = get_stock_market_data(watchlist="data/stock_codes/asx_200_stock_codes",
+                                                       relative_days=relative_days,
+                                                       data_types=["price"])
+
+    s02_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes",
+                                stock_market_data_path=s02_stock_market_data_path)
 
     pd.DataFrame(s02_results).to_csv("data/results/strategy_{no}_{today}.csv".format(
         no="s02",
