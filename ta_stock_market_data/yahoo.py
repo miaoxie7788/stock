@@ -3,7 +3,9 @@
 """
 
 import os
+from datetime import date
 
+from dateutil.relativedelta import relativedelta
 from yahoo_fin.stock_info import get_data, get_dividends, get_splits
 
 
@@ -19,7 +21,7 @@ def export_stock_info_df_to_csv(stock_info_df_dict, path="data"):
         df.to_csv(os.path.join(path, name), index=False, header=True)
 
 
-def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=None, interval="1d"):
+def get_stock_data(stock_code, data_types, start_date=None, end_date=None, interval="1d"):
     """
         Get historical price, dividend and splits data for a stock between start_date and end_date.
 
@@ -28,8 +30,8 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
     :param start_date:              start date, datetime
     :param end_date:                end date, datetime
     :param interval:                "1d", "1wk" or "1mo"
-    :return:                        stock_info_df_dict: {csv_filename: df},
-                                    csv_filename: {market}_{code}_{date_type}.csv
+    :return:                        stock_info_df_dict: {csv_filename: df, ...},
+                                    csv_filename: {market}_{code}_{data_type}.csv
     """
 
     # Get historical data.
@@ -82,22 +84,68 @@ def get_stock_historical_data(stock_code, data_types, start_date=None, end_date=
     return stock_info_df_dict
 
 
-if __name__ == "__main__":
+def get_stock_market_data(watchlist, relative_days=None,
+                          data_types=None, start_date=None, end_date=None, interval="1d", path="data"):
+    """
+        Get historical price data for stocks presented in the watchlist.
 
-    # Get HS stock historical data.
-    with open("data/stock_codes/hs_stock_codes") as f:
-        hs_stock_codes = [stock.strip() for stock in f.readlines()]
+        Case 1:  start_date and end_date are given.
 
-    hs_path = "data/stock"
-    for hs_stock_code in hs_stock_codes:
-        dfs = get_stock_historical_data(stock_code=hs_stock_code, data_types=["price"])
-        export_stock_info_df_to_csv(dfs, hs_path)
+        Case 2:  start_date is given but not end_date.
+                The default end_date is today.
 
-    # Get ASX stock historical data.
-    with open("data/stock_codes/asx_stock_codes") as f:
-        asx_stock_codes = [stock.strip() for stock in f.readlines()]
+        Case 3:  end_date is given but not start_date.
+                If relative_days is given, start_date = end_date - relative_days;
+                otherwise start_date=earliest.
 
-    asx_path = "data/stock"
-    for asx_stock_code in asx_stock_codes:
-        dfs = get_stock_historical_data(stock_code=asx_stock_code, data_types=["price"])
-        export_stock_info_df_to_csv(dfs, asx_path)
+        Case 4:  start_date and end_date are not given.
+                If relative_days is given, start_date = today - relative_days and end_date=today;
+                otherwise start_date=earliest and end_date = today.
+
+        The data are exported into {path}/{stock_market}_{start_date}_{end_date}_{interval}.
+    """
+
+    # stock market: 'asx' or 'hs'.
+    if "asx" in watchlist:
+        market = "asx"
+    elif "hs" in watchlist:
+        market = "hs"
+    else:
+        market = ""
+
+    # start_date and end_date.
+    today = date.today()
+    if start_date and not end_date:
+        end_date = today
+    elif not start_date and end_date:
+        if relative_days:
+            start_date = end_date - relativedelta(days=relative_days)
+    elif not start_date and not end_date:
+        end_date = today
+        if relative_days:
+            start_date = end_date - relativedelta(days=relative_days)
+
+    # watchlist.
+    with open(watchlist) as f:
+        stock_codes = [line.strip() for line in f.readlines()]
+
+    for stock_code in stock_codes:
+        day_dfs = get_stock_data(stock_code=stock_code,
+                                 data_types=data_types,
+                                 start_date=start_date,
+                                 end_date=end_date,
+                                 interval=interval)
+
+        if not start_date:
+            start_date_str = "earliest"
+        else:
+            start_date_str = str(start_date).replace("-", "")
+
+        end_date_str = str(end_date).replace("-", "")
+        stock_market_data_path = os.path.join(path, "{market}_{start_date}_{end_date}_{interval}".format(
+            market=market,
+            start_date=start_date_str,
+            end_date=end_date_str,
+            interval=interval))
+
+        export_stock_info_df_to_csv(day_dfs, path=stock_market_data_path)
