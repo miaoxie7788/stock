@@ -10,16 +10,39 @@ from dateutil.relativedelta import relativedelta
 from yahoo_fin.stock_info import get_data, get_dividends, get_splits
 
 
-def export_stock_info_df_to_csv(stock_info_df_dict, path="data"):
+def stock_data_dfs_to_csv(stock_data_dfs, stock_market_data_path):
     """
-        Export dfs presented in stock_info_df to csvs.
+        Export dfs to CSVs.
     """
-    # Make a folder if path does not exist.
-    if not os.path.exists(path):
-        os.mkdir(path)
+    if not os.path.exists(stock_market_data_path):
+        os.mkdir(stock_market_data_path)
 
-    for name, df in stock_info_df_dict.items():
-        df.to_csv(os.path.join(path, name), index=False, header=True)
+    for csv_filename, df in stock_data_dfs.items():
+        stock_data_path = os.path.join(stock_market_data_path, csv_filename)
+        df.to_csv(stock_data_path, index=False, header=True)
+
+
+def stock_data_dfs_read_csv(stock_code, stock_market_data_path):
+    """
+        Read stock_data_dfs from CSVs.
+    """
+    # Split a stock_code into code and market, e.g, car.ax -> car, ax.
+    code, market = stock_code.split(".")
+
+    stock_data_dfs = dict()
+    for data_type in ["price", "dividend", "splits"]:
+        # short_csv_filename.
+        csv_filename = "{market}_{code}_{date_type}.csv".format(
+            market=market,
+            code=code,
+            date_type=data_type)
+
+        stock_data_path = os.path.join(stock_market_data_path, csv_filename)
+
+        if os.path.exists(stock_data_path):
+            stock_data_dfs[data_type] = pd.read_csv(stock_data_path)
+
+    return stock_data_dfs
 
 
 def get_stock_data(stock_code, data_types, start_date=None, end_date=None, interval="1d"):
@@ -31,34 +54,32 @@ def get_stock_data(stock_code, data_types, start_date=None, end_date=None, inter
     :param start_date:              start date, datetime
     :param end_date:                end date, datetime
     :param interval:                "1d", "1wk" or "1mo"
-    :return:                        stock_info_df_dict: {csv_filename: df, ...},
+    :return:                        stock_data_dfs: {csv_filename: df, ...},
                                     csv_filename: {market}_{code}_{data_type}.csv
     """
-
-    # Get historical data.
-    stock_info_func_dict = {
+    stock_data_funcs = {
         "price": get_data,
         "dividend": get_dividends,
         "splits": get_splits
     }
 
-    stock_info_df_dict = dict()
+    stock_data_dfs = dict()
     for data_type in data_types:
-        stock_info_func = stock_info_func_dict[data_type]
+        stock_data_func = stock_data_funcs[data_type]
         try:
             if data_type == "price":
-                df = stock_info_func(ticker=stock_code,
+                df = stock_data_func(ticker=stock_code,
                                      start_date=start_date,
                                      end_date=end_date,
                                      index_as_date=False,
                                      interval=interval)
             else:
-                df = stock_info_func(ticker=stock_code,
+                df = stock_data_func(ticker=stock_code,
                                      start_date=start_date,
                                      end_date=end_date,
                                      index_as_date=False)
 
-            # Get start_date and end_date.
+            # start_date and end_date.
             start_date = df["date"].min()
             end_date = df["date"].max()
 
@@ -69,7 +90,7 @@ def get_stock_data(stock_code, data_types, start_date=None, end_date=None, inter
                 code=code,
                 date_type=data_type)
 
-            stock_info_df_dict[name] = df
+            stock_data_dfs[name] = df
 
             print("Historical {data_type} data are downloaded for {stock_code} between {start_date} and {end_date}".
                   format(stock_code=stock_code, data_type=data_type, start_date=start_date, end_date=end_date))
@@ -82,7 +103,7 @@ def get_stock_data(stock_code, data_types, start_date=None, end_date=None, inter
             print("Historical {data_type} data are not available for {stock_code}.".
                   format(stock_code=stock_code, data_type=data_type))
 
-    return stock_info_df_dict
+    return stock_data_dfs
 
 
 def get_stock_market_data(watchlist, relative_days=None,
@@ -150,23 +171,6 @@ def get_stock_market_data(watchlist, relative_days=None,
                                  end_date=end_date,
                                  interval=interval)
 
-        export_stock_info_df_to_csv(day_dfs, path=stock_market_data_path)
+        stock_data_dfs_to_csv(day_dfs, stock_market_data_path=stock_market_data_path)
 
     return stock_market_data_path
-
-
-def stock_data_read_csv(stock_code, path, data_type="price"):
-    code, market = stock_code.split(".")
-    # short_csv_filename.
-    csv_filename = "{market}_{code}_{date_type}.csv".format(
-        market=market,
-        code=code,
-        date_type=data_type)
-
-    stock_path = os.path.join(path, csv_filename)
-    try:
-        df = pd.read_csv(stock_path)
-    except FileNotFoundError:
-        df = None
-
-    return df
