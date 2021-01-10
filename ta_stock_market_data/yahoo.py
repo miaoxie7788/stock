@@ -5,6 +5,7 @@
 import os
 from datetime import date
 
+import pandas as pd
 from dateutil.relativedelta import relativedelta
 from yahoo_fin.stock_info import get_data, get_dividends, get_splits
 
@@ -129,6 +130,19 @@ def get_stock_market_data(watchlist, relative_days=None,
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
+    # stock_market_date_path.
+    if not start_date:
+        start_date_str = "earliest"
+    else:
+        start_date_str = str(start_date).replace("-", "")
+
+    end_date_str = str(end_date).replace("-", "")
+    stock_market_data_path = os.path.join(path, "{market}_{start_date}_{end_date}_{interval}".format(
+        market=market,
+        start_date=start_date_str,
+        end_date=end_date_str,
+        interval=interval))
+
     for stock_code in stock_codes:
         day_dfs = get_stock_data(stock_code=stock_code,
                                  data_types=data_types,
@@ -136,16 +150,23 @@ def get_stock_market_data(watchlist, relative_days=None,
                                  end_date=end_date,
                                  interval=interval)
 
-        if not start_date:
-            start_date_str = "earliest"
-        else:
-            start_date_str = str(start_date).replace("-", "")
-
-        end_date_str = str(end_date).replace("-", "")
-        stock_market_data_path = os.path.join(path, "{market}_{start_date}_{end_date}_{interval}".format(
-            market=market,
-            start_date=start_date_str,
-            end_date=end_date_str,
-            interval=interval))
-
         export_stock_info_df_to_csv(day_dfs, path=stock_market_data_path)
+
+    return stock_market_data_path
+
+
+def stock_data_read_csv(stock_code, path, data_type="price"):
+    code, market = stock_code.split(".")
+    # short_csv_filename.
+    csv_filename = "{market}_{code}_{date_type}.csv".format(
+        market=market,
+        code=code,
+        date_type=data_type)
+
+    stock_path = os.path.join(path, csv_filename)
+    try:
+        df = pd.read_csv(stock_path)
+    except FileNotFoundError:
+        df = None
+
+    return df
