@@ -1,11 +1,10 @@
 """
-    1) moderately bullish in past 12 months (53 weeks * 5 trading days)
-    2) moderately bullish in past 12 weeks (12 weeks * 5 trading days)
-    3) break lower bollinger band (low price)
-    4) rsi <= 35
-    5) hammer/inverted_hammer candlestick
+    1) moderately bullish in past 12 weeks (12 weeks * 5 trading days)
+    2) break lower bollinger band (low price)
+    3) rsi <= 35
+    4) hammer/inverted_hammer candlestick
 
-    (1 or 2) and (3 or 4) and 5
+    1 and (3 or 4) and 4
 """
 from datetime import date
 
@@ -17,7 +16,7 @@ from dateutil.relativedelta import relativedelta
 
 from ta_candlestick.pattern import is_hammer, is_inverted_hammer
 from ta_indicator.trend import is_upward_or_downward_trend
-from ta_stock_market_data.yahoo import get_stock_market_data, stock_data_dfs_read_csv
+from ta_stock_market_data.yahoo import stock_data_dfs_read_csv
 
 relative_days = 366
 
@@ -28,66 +27,57 @@ def exec_s01(df, exec_date):
     # Validate whether df has sufficient data.
     # At least S01 requires 60 trading days' data.
     if df0.iloc[-1]["date"] != exec_date:
+        print(df0.iloc[-1]["ticker"])
         raise ValueError("The stock data is inconsistent with the given exec_date.")
 
     if len(df0) < 60:
         return False
 
-    # condition 1: moderately bullish in past 12 months (53 * 5 = 265 trading days)
-    if len(df0) > 265:
-        df1 = df0.iloc[-265:]
-    else:
-        df1 = df0
+    # condition 1: moderately bullish in past 12 weeks (12 * 5 = 60 trading days)
+    df1 = df0.iloc[-60:]
 
-    candlesticks = df1.to_dict(orient="records")
-    close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
-    _, degree = is_upward_or_downward_trend(close_prices)
-    if 0 <= degree <= 45:
+    candlesticks1 = df1.to_dict(orient="records")
+    close_prices1 = [candlestick['close'] for candlestick in candlesticks1 if not np.isnan(candlestick['close'])]
+    _, degree1 = is_upward_or_downward_trend(close_prices1)
+    if 0 <= degree1 <= 45:
         cond1 = True
     else:
         cond1 = False
 
-    # condition 2: moderately bullish in past 3 months (12 * 5 = 60 trading days)
-    df2 = df0.iloc[-60:]
+    # condition 2: break lower bollinger band (low price)
+    df2 = df1
 
-    candlesticks = df2.to_dict(orient="records")
-    close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
-    _, degree = is_upward_or_downward_trend(close_prices)
-    if 0 <= degree <= 45:
+    bbs = df2.ta.bbands(length=20, std=2)
+    today_bbl = bbs.iloc[-1].to_list()[0]
+    today_low = df2.iloc[-1]["low"]
+    if today_low <= today_bbl:
         cond2 = True
     else:
         cond2 = False
 
-    # condition 3: break lower bollinger band (low price)
+    # condition 3: rsi <= 35
     df3 = df1
 
-    bbs = df3.ta.bbands(length=20, std=2)
-    today_bbl = bbs.iloc[-1].to_list()[0]
-    today_low = df.iloc[-1]["low"]
-    if today_low <= today_bbl:
+    rsi = df3.ta.rsi(length=14)
+    today_rsi = rsi.iloc[-1]
+    if today_rsi <= 35:
         cond3 = True
     else:
         cond3 = False
 
-    # condition 4: rsi <= 35
-    df4 = df1
+    # condition 4: hammer/inverted_hammer candlestick
+    today_candlestick = df0.iloc[-1]
 
-    rsi = df4.ta.rsi(length=14)
-    today_rsi = rsi.iloc[-1]
-    if today_rsi <= 35:
+    if is_hammer(today_candlestick, 1, 2, 0.1) or is_inverted_hammer(today_candlestick, 2, 1, 0.1):
         cond4 = True
     else:
         cond4 = False
 
-    # condition 5: hammer/inverted_hammer candlestick
-    today_candlestick = df.iloc[-1]
-
-    if is_hammer(today_candlestick, 1, 2, 0.1) or is_inverted_hammer(today_candlestick, 2, 1, 0.1):
-        cond5 = True
-    else:
-        cond5 = False
-
-    if (cond1 or cond2) and (cond3 or cond4) and cond5:
+    # TODO test only
+    # cond4 = True
+    if cond1 and (cond2 or cond3) and cond4:
+        print(cond1, cond2, cond3, cond4)
+        # print(degree1)
         return True
 
     return False
@@ -118,9 +108,10 @@ def exec_strategy(watchlist, stock_market_data_path):
 
 
 if __name__ == "__main__":
-    s01_stock_market_data_path = get_stock_market_data(watchlist="data/stock_codes/asx_200_stock_codes",
-                                                       relative_days=relative_days,
-                                                       data_types=["price"])
+    # s01_stock_market_data_path = get_stock_market_data(watchlist="data/stock_codes/asx_200_stock_codes",
+    #                                                    relative_days=relative_days,
+    #                                                    data_types=["price"])
+    s01_stock_market_data_path = "data/asx_20200125_20210125_1d"
     s01_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes",
                                 stock_market_data_path=s01_stock_market_data_path)
 
