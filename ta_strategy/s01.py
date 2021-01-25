@@ -171,5 +171,5 @@ def exec_strategy(watchlist, path="data"):
 
 
 if __name__ == "__main__":
-    # get_data(watchlist="data/stock_codes/asx_200_stock_codes")
+    get_data(watchlist="data/stock_codes/asx_200_stock_codes")
     exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
