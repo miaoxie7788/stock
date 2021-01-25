@@ -9,13 +9,14 @@
 import os
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 # noinspection PyUnresolvedReferences
 import pandas_ta as ta
 from dateutil.relativedelta import relativedelta
 
-from ta_candlestick.core.pattern import is_hammer, is_inverted_hammer
-from ta_candlestick.core.trend import is_bullish_or_bearish_trend
+from ta_candlestick.pattern import is_hammer, is_inverted_hammer
+from ta_indicator.trend import is_upward_or_downward_trend
 from ta_stock_market_data.yahoo import get_stock_historical_data, export_stock_info_df_to_csv
 
 
@@ -105,8 +106,8 @@ def exec_strategy(watchlist, path="data"):
     with open(watchlist) as f:
         stock_codes = [line.strip() for line in f.readlines()]
 
+    results = list()
     for stock_code in stock_codes:
-
         # condition 1: moderately bullish in past 12 months
         df = stock_market_data_read_csv(stock_code, m12_stock_path)
         if df is None:
@@ -117,7 +118,9 @@ def exec_strategy(watchlist, path="data"):
             df = df.iloc[-12:]
 
         candlesticks = df.to_dict(orient="records")
-        _, degree = is_bullish_or_bearish_trend(candlesticks)
+
+        close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
+        _, degree = is_upward_or_downward_trend(close_prices)
         if 0 <= degree <= 45:
             cond1 = True
         else:
@@ -133,7 +136,8 @@ def exec_strategy(watchlist, path="data"):
             df = df.iloc[-12:]
 
         candlesticks = df.to_dict(orient="records")
-        _, degree = is_bullish_or_bearish_trend(candlesticks)
+        close_prices = [candlestick['close'] for candlestick in candlesticks if not np.isnan(candlestick['close'])]
+        _, degree = is_upward_or_downward_trend(close_prices)
         if 0 <= degree <= 45:
             cond2 = True
         else:
@@ -153,7 +157,7 @@ def exec_strategy(watchlist, path="data"):
         # condition 4: rsi <= 35
         rsi = df.ta.rsi(length=14)
         today_rsi = rsi.iloc[-1]
-        if today_rsi <= 40:
+        if today_rsi <= 35:
             cond4 = True
         else:
             cond4 = False
@@ -166,10 +170,21 @@ def exec_strategy(watchlist, path="data"):
         else:
             cond5 = False
 
-        if (cond1 and cond2) and (cond3 and cond4) and cond5:
+        if (cond1 and cond2) and (cond3 or cond4) and cond5:
             print(stock_code)
+            today = df.iloc[-1]["date"]
+            strategy_no = "s01"
+            results.append({"date": today, "strategy": strategy_no, "stock_code": stock_code})
+
+    return results
 
 
 if __name__ == "__main__":
-    get_data(watchlist="data/stock_codes/asx_200_stock_codes")
-    exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
+    # get_data(watchlist="data/stock_codes/asx_200_stock_codes")
+    s01_results = exec_strategy(watchlist="data/stock_codes/asx_200_stock_codes")
+
+    pd.DataFrame(s01_results).to_csv("data/results/strategy_{no}_{today}.csv".format(
+        no="s01",
+        today=datetime.today().strftime("%Y%m%d")),
+        index=False,
+        header=True)
