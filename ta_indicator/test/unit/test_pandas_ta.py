@@ -1,8 +1,8 @@
 import unittest
 
-from ta_stock_market_data.yahoo import get_stock_historical_data
+from ta_stock_market_data.yahoo import get_stock_data
 
-dfs = get_stock_historical_data("tls.ax", ["price"])
+dfs = get_stock_data("tls.ax", ["price"])
 df = dfs['ax_tls_price.csv']
 
 
